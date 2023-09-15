@@ -1,3 +1,6 @@
+import sys
+
+import pandas as pd
 import torch
 import os
 import numpy as np
@@ -36,6 +39,7 @@ class Server(object):
         self.auto_break = args.auto_break
 
         self.clients = []
+        self.users = []
         self.selected_clients = []
         self.train_slow_clients = []
         self.send_slow_clients = []
@@ -136,24 +140,68 @@ class Server(object):
             self.uploaded_weights[i] = w / tot_samples
 
 
-#################################################################################
+###############################################################################
+
     def aggregate_parameters(self):
         assert (len(self.uploaded_models) > 0)
 
         self.global_model = copy.deepcopy(self.uploaded_models[0])
         for param in self.global_model.parameters():
             param.data.zero_()
-            
         for w, client_model in zip(self.uploaded_weights, self.uploaded_models):
             self.add_parameters(w, client_model)
+        return self.add_parameters(w, client_model)
+    #-------------------------------- My functions------------------------------------#
 
+    def valueOfList(self, value):
+        valueList = list()
+    
+        if type(value) == torch.Tensor:
+            value = value.numpy()
+            value = value.tolist()
+            self.valueOfList(value)
+
+        if type(value) == np.ndarray:
+            value = value.tolist()
+            self.valueOfList(value)
+
+        if type(value) == list and len(value) > 0:
+            for i in range(len(value)):
+                if type(value[i]) == list and len(value[i]) > 0:
+                    valueList += self.valueOfList(value[i])
+                elif type(value[i]) == int or type(value[i]) == float:
+                    valueList.append(value[i])
+            return valueList
+
+
+    def csv_clients(self, lista):
+        # Faz a operação de transposição da lista, ou seja, inverte linhas e colunas
+        lista = list(map(list, zip(*lista)))
+
+        df = pd.DataFrame(lista)
+        colum_names = []
+
+        for i in range(df.shape[1]):
+            colum_names.append(f'Cliente {i+1}')
+        
+        df.columns = colum_names
+        df.to_csv('./csv/clientes.csv', sep=',')
+
+
+    #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= xxxxxxxxxxxx -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-#
     def add_parameters(self, w, client_model):
-        for server_param, client_param in zip(
-            self.global_model.parameters(), client_model.parameters()):
-            print(client_param.data.zero_())
+        vp = []
+        valores = []
+        for server_param, client_param in zip(self.global_model.parameters(), client_model.parameters()):
+            valores += self.valueOfList(client_param.data)
             server_param.data += client_param.data.clone() * w
+        
+        vp.append(valores)
+        return vp
 
-################################################################################
+
+#################################################################################
+
 
     def save_global_model(self):
         model_path = os.path.join("models", self.dataset)

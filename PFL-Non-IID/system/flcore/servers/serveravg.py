@@ -1,3 +1,4 @@
+import sys
 import time
 from flcore.clients.clientavg import clientAVG
 from flcore.servers.serverbase import Server
@@ -39,10 +40,10 @@ class FedAvg(Server):
             # [t.join() for t in threads]
 
             self.receive_models()
+            vc = []
             if self.dlg_eval and i%self.dlg_gap == 0:
                 self.call_dlg(i)
-            self.aggregate_parameters()
-
+            self.users += self.aggregate_parameters()
             self.Budget.append(time.time() - s_t)
             print('-'*25, 'time cost', '-'*25, self.Budget[-1])
 
@@ -65,3 +66,7 @@ class FedAvg(Server):
             print(f"\n-------------Fine tuning round-------------")
             print("\nEvaluate new clients")
             self.evaluate()
+
+
+        # print(f'==================> {len(self.users[1])}')
+        self.csv_clients((self.users))
