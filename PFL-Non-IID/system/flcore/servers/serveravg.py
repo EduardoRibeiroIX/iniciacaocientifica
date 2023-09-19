@@ -38,9 +38,10 @@ class FedAvg(Server):
             #            for client in self.selected_clients]
             # [t.start() for t in threads]
             # [t.join() for t in threads]
-
-            self.receive_models()
-            vc = []
+            x += self.receive_models()
+            print(self.receive_models())
+            sys.exit()
+            
             if self.dlg_eval and i%self.dlg_gap == 0:
                 self.call_dlg(i)
             self.users += self.aggregate_parameters()
@@ -49,7 +50,7 @@ class FedAvg(Server):
 
             if self.auto_break and self.check_done(acc_lss=[self.rs_test_acc], top_cnt=self.top_cnt):
                 break
-
+        
         print("\nBest accuracy.")
         # self.print_(max(self.rs_test_acc), max(
         #     self.rs_train_acc), min(self.rs_train_loss))
@@ -69,4 +70,6 @@ class FedAvg(Server):
 
 
         # print(f'==================> {len(self.users[1])}')
+        # self.users = [[x for listas in self.users for x in listas]]
+        # sys.exit()
         self.csv_clients((self.users))

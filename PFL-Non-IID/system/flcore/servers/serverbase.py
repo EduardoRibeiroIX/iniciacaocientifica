@@ -39,7 +39,7 @@ class Server(object):
         self.auto_break = args.auto_break
 
         self.clients = []
-        self.users = []
+        self.users = [] # conter os dados do usuário
         self.selected_clients = []
         self.train_slow_clients = []
         self.send_slow_clients = []
@@ -119,7 +119,11 @@ class Server(object):
         assert (len(self.selected_clients) > 0)
 
         active_clients = random.sample(
-            self.selected_clients, int((1-self.client_drop_rate) * self.current_num_join_clients))
+            self.selected_clients, int((1-self.client_drop_rate) * self.current_num_join_clients)
+            )
+        # print(type(active_clients))
+        # sys.exit()
+
 
         self.uploaded_ids = []
         self.uploaded_weights = []
@@ -138,20 +142,24 @@ class Server(object):
                 self.uploaded_models.append(client.model)
         for i, w in enumerate(self.uploaded_weights):
             self.uploaded_weights[i] = w / tot_samples
-
+        # print(type(self.uploaded_ids))
+        # sys.exit()
+        return (self.uploaded_ids)
 
 ###############################################################################
 
     def aggregate_parameters(self):
         assert (len(self.uploaded_models) > 0)
+        add_pr = []
 
         self.global_model = copy.deepcopy(self.uploaded_models[0])
         for param in self.global_model.parameters():
             param.data.zero_()
         for w, client_model in zip(self.uploaded_weights, self.uploaded_models):
-            self.add_parameters(w, client_model)
-        return self.add_parameters(w, client_model)
-    #-------------------------------- My functions------------------------------------#
+            add_pr += self.add_parameters(w, client_model)
+        add_pr = [self.valueOfList(add_pr)]
+        return add_pr 
+#-------------------------------- My functions------------------------------------#
 
     def valueOfList(self, value):
         valueList = list()
@@ -177,22 +185,25 @@ class Server(object):
     def csv_clients(self, lista):
         # Faz a operação de transposição da lista, ou seja, inverte linhas e colunas
         lista = list(map(list, zip(*lista)))
-
         df = pd.DataFrame(lista)
         colum_names = []
 
         for i in range(df.shape[1]):
-            colum_names.append(f'Cliente {i+1}')
+            # colum_names.append(f'Modelo {self.algorithm}')
+            colum_names.append(f'Round {i}')
         
         df.columns = colum_names
         df.to_csv('./csv/clientes.csv', sep=',')
 
 
     #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= xxxxxxxxxxxx -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-#
-    def add_parameters(self, w, client_model):
+    def add_parameters(self, w, client_model, ids):
         vp = []
         valores = []
+        # print(len(self.uploaded_ids))
+        # sys.exit()
         for server_param, client_param in zip(self.global_model.parameters(), client_model.parameters()):
+            print(client_param.data.shape)
             valores += self.valueOfList(client_param.data)
             server_param.data += client_param.data.clone() * w
         
