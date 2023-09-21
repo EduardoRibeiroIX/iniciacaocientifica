@@ -39,7 +39,8 @@ class Server(object):
         self.auto_break = args.auto_break
 
         self.clients = []
-        self.users = [] # conter os dados do usuário
+        self.users = [] # contém os dados do usuário
+        self.ids = [] # contém os ids dos clientes a cada round de traino
         self.selected_clients = []
         self.train_slow_clients = []
         self.send_slow_clients = []
@@ -115,6 +116,9 @@ class Server(object):
             client.send_time_cost['num_rounds'] += 1
             client.send_time_cost['total_cost'] += 2 * (time.time() - start_time)
 
+
+###############################################################################
+
     def receive_models(self):
         assert (len(self.selected_clients) > 0)
 
@@ -146,7 +150,6 @@ class Server(object):
         # sys.exit()
         return (self.uploaded_ids)
 
-###############################################################################
 
     def aggregate_parameters(self):
         assert (len(self.uploaded_models) > 0)
@@ -191,23 +194,32 @@ class Server(object):
         for i in range(df.shape[1]):
             # colum_names.append(f'Modelo {self.algorithm}')
             colum_names.append(f'Round {i}')
-        
         df.columns = colum_names
+
+        id = []
+        tam = len(df) // (self.args.num_clients * (self.args.global_rounds + 1))
+        for i in range(len(self.ids)):
+            for j in range(len(self.ids[0])):
+                id.extend(([self.ids[i][j]] * tam))
+        df['id'] = id
+        
+        # print(df.head())
         df.to_csv('./csv/clientes.csv', sep=',')
 
 
     #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= xxxxxxxxxxxx -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-#
-    def add_parameters(self, w, client_model, ids):
+    def add_parameters(self, w, client_model):
         vp = []
         valores = []
         # print(len(self.uploaded_ids))
         # sys.exit()
         for server_param, client_param in zip(self.global_model.parameters(), client_model.parameters()):
-            print(client_param.data.shape)
-            valores += self.valueOfList(client_param.data)
+            valores.extend(self.valueOfList(client_param.data))
             server_param.data += client_param.data.clone() * w
-        
+
         vp.append(valores)
+        # print(len(vp))
+        # sys.exit()
         return vp
 
 

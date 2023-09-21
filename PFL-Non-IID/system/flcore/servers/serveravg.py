@@ -38,9 +38,10 @@ class FedAvg(Server):
             #            for client in self.selected_clients]
             # [t.start() for t in threads]
             # [t.join() for t in threads]
-            x += self.receive_models()
-            print(self.receive_models())
-            sys.exit()
+
+            self.ids.append(self.receive_models())  #retorna os ids dos clientes ativos
+            # print(self.receive_models())
+            # sys.exit()
             
             if self.dlg_eval and i%self.dlg_gap == 0:
                 self.call_dlg(i)
@@ -69,7 +70,4 @@ class FedAvg(Server):
             self.evaluate()
 
 
-        # print(f'==================> {len(self.users[1])}')
-        # self.users = [[x for listas in self.users for x in listas]]
-        # sys.exit()
         self.csv_clients((self.users))
