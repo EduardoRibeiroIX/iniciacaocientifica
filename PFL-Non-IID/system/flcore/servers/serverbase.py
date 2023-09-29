@@ -8,6 +8,9 @@ import h5py
 import copy
 import time
 import random
+import pandas as pd
+from sklearn.cluster import KMeans
+from sklearn.preprocessing import StandardScaler
 
 from utils.data_utils import read_client_data
 from utils.dlg import DLG
@@ -39,8 +42,10 @@ class Server(object):
         self.auto_break = args.auto_break
 
         self.clients = []
-        self.users = [] # contém os dados do usuário
+        self.users = [] # contém os dados dos usuário
         self.ids = [] # contém os ids dos clientes a cada round de traino
+        self.obj_clients = {} # contém os objetos da clase Client
+        self.count_rounds = 0 # armazena a quantidade de rodadas
         self.selected_clients = []
         self.train_slow_clients = []
         self.send_slow_clients = []
@@ -102,9 +107,13 @@ class Server(object):
         else:
             self.current_num_join_clients = self.num_join_clients
         selected_clients = list(np.random.choice(self.clients, self.current_num_join_clients, replace=False))
-
-        return selected_clients
-
+        
+        for i, objeto in enumerate(selected_clients):
+            nome = f'{i+1}_cliente'
+            self.obj_clients[nome] = objeto
+        
+        return list(self.obj_clients.values())
+    
     def send_models(self):
         assert (len(self.clients) > 0)
 
@@ -117,52 +126,57 @@ class Server(object):
             client.send_time_cost['total_cost'] += 2 * (time.time() - start_time)
 
 
-###############################################################################
+######################################################################################
+
 
     def receive_models(self):
         assert (len(self.selected_clients) > 0)
 
-        active_clients = random.sample(
-            self.selected_clients, int((1-self.client_drop_rate) * self.current_num_join_clients)
-            )
-        # print(type(active_clients))
-        # sys.exit()
-
+        active_clients = self.select_clients()
 
         self.uploaded_ids = []
         self.uploaded_weights = []
         self.uploaded_models = []
         tot_samples = 0
+
         for client in active_clients:
             try:
                 client_time_cost = client.train_time_cost['total_cost'] / client.train_time_cost['num_rounds'] + \
                         client.send_time_cost['total_cost'] / client.send_time_cost['num_rounds']
+                
             except ZeroDivisionError:
                 client_time_cost = 0
+
             if client_time_cost <= self.time_threthold:
                 tot_samples += client.train_samples
                 self.uploaded_ids.append(client.id)
                 self.uploaded_weights.append(client.train_samples)
                 self.uploaded_models.append(client.model)
+
         for i, w in enumerate(self.uploaded_weights):
             self.uploaded_weights[i] = w / tot_samples
-        # print(type(self.uploaded_ids))
-        # sys.exit()
-        return (self.uploaded_ids)
+        
+        return active_clients
 
 
     def aggregate_parameters(self):
         assert (len(self.uploaded_models) > 0)
         add_pr = []
-
         self.global_model = copy.deepcopy(self.uploaded_models[0])
+
         for param in self.global_model.parameters():
             param.data.zero_()
+
         for w, client_model in zip(self.uploaded_weights, self.uploaded_models):
             add_pr += self.add_parameters(w, client_model)
+
         add_pr = [self.valueOfList(add_pr)]
+
         return add_pr 
-#-------------------------------- My functions------------------------------------#
+
+
+#-------------------------------- My functions---------------------------------------#
+
 
     def valueOfList(self, value):
         valueList = list()
@@ -180,10 +194,12 @@ class Server(object):
             for i in range(len(value)):
                 if type(value[i]) == list and len(value[i]) > 0:
                     valueList += self.valueOfList(value[i])
+
                 elif type(value[i]) == int or type(value[i]) == float:
                     valueList.append(value[i])
-            return valueList
 
+            return valueList
+        
 
     def csv_clients(self, lista):
         # Faz a operação de transposição da lista, ou seja, inverte linhas e colunas
@@ -191,39 +207,78 @@ class Server(object):
         df = pd.DataFrame(lista)
         colum_names = []
 
-        for i in range(df.shape[1]):
-            # colum_names.append(f'Modelo {self.algorithm}')
+        for i in range(self.global_rounds+1):
             colum_names.append(f'Round {i}')
+
+        # print('-=-='*30)
+        # print(df.columns)
+        # print(colum_names)
+        # sys.exit()
         df.columns = colum_names
 
         id = []
-        tam = len(df) // (self.args.num_clients * (self.args.global_rounds + 1))
+        tam = len(df) // (self.args.num_clients * (self.count_rounds + 1))
+        chaves = []
         for i in range(len(self.ids)):
-            for j in range(len(self.ids[0])):
-                id.extend(([self.ids[i][j]] * tam))
+            chaves.extend([chave for chave, valor in self.obj_clients.items() if valor == self.ids[i]])
+        for valor in chaves:
+            x = [valor] * tam
+            id.extend(x)
         df['id'] = id
+
+        # df.to_csv('./csv/clientes.csv')
+        return df
+
+
+    def data_clursters(self, df, nCluster):
+        df = df.rename_axis("Index")
+        colunas = df.columns
+        colunas = colunas.tolist()
+        grouped = df.groupby(colunas).mean().reset_index()
+        data_for_clustering = grouped[colunas[0:-1]]
+        scaler = StandardScaler()
+        normalized_data = scaler.fit_transform(data_for_clustering)
+        k = nCluster
+        kmeans = KMeans(n_clusters=k, random_state=0)
+        grouped['cluster'] = kmeans.fit_predict(normalized_data)
+        grouped_colunas = grouped.columns
+        grouped_colunas = grouped_colunas.tolist()
+        x = grouped[grouped_colunas]
+        # x.to_csv('./csv/clientes.csv')
         
-        # print(df.head())
-        df.to_csv('./csv/clientes.csv', sep=',')
+        return grouped[grouped_colunas]
 
 
-    #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= xxxxxxxxxxxx -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-#
+    def clientes_cluster(self, df, cluster = int, objeto = dict):
+        df = df[df['cluster'] == cluster]
+        x = df['id'].unique()
+        obj = objeto
+        valores_obj = []
+        for valor in x:
+            print(f'===============>> {valor}')
+            sys.exit() 
+            if valor in obj:
+                v = obj[valor]
+                valores_obj.append(v)
+
+        return valores_obj
+
+
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= xxxxxxxxxxxxxxx -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-#
     def add_parameters(self, w, client_model):
         vp = []
         valores = []
-        # print(len(self.uploaded_ids))
-        # sys.exit()
+       
         for server_param, client_param in zip(self.global_model.parameters(), client_model.parameters()):
             valores.extend(self.valueOfList(client_param.data))
             server_param.data += client_param.data.clone() * w
 
         vp.append(valores)
-        # print(len(vp))
-        # sys.exit()
+        
         return vp
 
 
-#################################################################################
+######################################################################################
 
 
     def save_global_model(self):
