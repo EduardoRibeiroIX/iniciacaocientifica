@@ -51,12 +51,11 @@ class FedAvg(Server):
                 self.treinamento(i, self.select_clients())
                 if self.auto_break and self.check_done(acc_lss=[self.rs_test_acc], top_cnt=self.top_cnt):
                     break
-
             else:
                 self.treinamento(i, self.select_clients())
                 if self.auto_break and self.check_done(acc_lss=[self.rs_test_acc], top_cnt=self.top_cnt):
                     break
-
+                
             self.count_rounds += 1
 
 
@@ -75,7 +74,10 @@ class FedAvg(Server):
             print("\nEvaluate new clients")
             self.evaluate()
 
-        # print(len(self.users[0]))
-        # sys.exit()
-        x = self.clientes_cluster(self.data_clursters(self.csv_clients((self.users)), 1), 1, self.obj_clients)
+        
+        df_clientes = self.csv_clients(self.users)
+        df_cluster_clientes = self.data_clursters(df_clientes, 1)
+        clientes_do_cluster = self.clientes_cluster(df_cluster_clientes, 0, self.obj_clients)
+        print(f'==================> {clientes_do_cluster}')
+        
         

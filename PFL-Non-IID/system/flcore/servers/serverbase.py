@@ -206,27 +206,23 @@ class Server(object):
         lista = list(map(list, zip(*lista)))
         df = pd.DataFrame(lista)
         colum_names = []
-
         for i in range(self.global_rounds+1):
             colum_names.append(f'Round {i}')
-
-        # print('-=-='*30)
-        # print(df.columns)
-        # print(colum_names)
-        # sys.exit()
         df.columns = colum_names
 
         id = []
-        tam = len(df) // (self.args.num_clients * (self.count_rounds + 1))
+        tam = len(df) // (self.args.num_clients * (self.global_rounds + 1))
         chaves = []
         for i in range(len(self.ids)):
             chaves.extend([chave for chave, valor in self.obj_clients.items() if valor == self.ids[i]])
+        
+       
+
         for valor in chaves:
             x = [valor] * tam
             id.extend(x)
         df['id'] = id
 
-        # df.to_csv('./csv/clientes.csv')
         return df
 
 
@@ -255,8 +251,6 @@ class Server(object):
         obj = objeto
         valores_obj = []
         for valor in x:
-            print(f'===============>> {valor}')
-            sys.exit() 
             if valor in obj:
                 v = obj[valor]
                 valores_obj.append(v)
