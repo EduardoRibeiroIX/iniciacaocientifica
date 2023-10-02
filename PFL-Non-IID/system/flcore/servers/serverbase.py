@@ -3,6 +3,7 @@ import sys
 import pandas as pd
 import torch
 import os
+import numpy
 import numpy as np
 import h5py
 import copy
@@ -45,7 +46,6 @@ class Server(object):
         self.users = [] # contém os dados dos usuário
         self.ids = [] # contém os ids dos clientes a cada round de traino
         self.obj_clients = {} # contém os objetos da clase Client
-        self.count_rounds = 0 # armazena a quantidade de rodadas
         self.selected_clients = []
         self.train_slow_clients = []
         self.send_slow_clients = []
@@ -169,16 +169,59 @@ class Server(object):
 
         for w, client_model in zip(self.uploaded_weights, self.uploaded_models):
             add_pr += self.add_parameters(w, client_model)
-
         add_pr = [self.valueOfList(add_pr)]
 
         return add_pr 
+
+
+    def add_parameters(self, w, client_model):
+        vp = np.array([])
+        valores = []
+        media = []
+
+        for server_param, client_param in zip(self.global_model.parameters(), client_model.parameters()):
+            valores.extend(self.valueOfList(client_param.data))
+            server_param.data += client_param.data.clone() * w
+
+        vp = np.append(vp, valores)
+        media.append(float(vp.sum() / len(vp)))
+        # print(media)
+        # sys.exit()
+        
+        return media
+    
 
 
 #-------------------------------- My functions---------------------------------------#
 
 
     def valueOfList(self, value):
+        """
+    Retorna uma lista que contém todos os valores inteiros e flutuantes contidos em uma estrutura de dados aninhada.
+
+    Args:
+        value (list, np.ndarray, torch.Tensor): A estrutura de dados da qual você deseja extrair valores inteiros e flutuantes.
+
+    Returns:
+        list: Uma lista contendo todos os valores inteiros e flutuantes encontrados na estrutura de dados.
+
+    Note:
+        - A função aceita estruturas de dados aninhadas (listas dentro de listas).
+        - Se `value` for uma instância de `torch.Tensor`, ela será convertida em um array numpy e depois em uma lista.
+        - Se `value` for uma instância de `np.ndarray`, ela será convertida em uma lista.
+        - A função recursivamente percorre estruturas de dados aninhadas para extrair todos os valores inteiros e flutuantes.
+        - Os valores inteiros e flutuantes extraídos são adicionados à lista `valueList`.
+
+    Exemplos:
+        >>> obj = SuaClasse()
+        >>> tensor = torch.tensor([[1.0, 2.0], [3.0, 4.0]])
+        >>> lista = [1, [2, 3.5], [[4, 5.0], 6]]
+        >>> obj.valueOfList(tensor)
+        [1.0, 2.0, 3.0, 4.0]
+        >>> obj.valueOfList(lista)
+        [1, 2, 3.5, 4, 5.0, 6]
+    """
+
         valueList = list()
     
         if type(value) == torch.Tensor:
@@ -202,36 +245,92 @@ class Server(object):
         
 
     def csv_clients(self, lista):
+        """
+    Converte uma lista de dados em um DataFrame pandas para exportação em formato CSV ou DataFrame.
+
+    Args:
+        lista (list): Uma lista de dados que você deseja converter em um DataFrame.
+
+    Returns:
+        pandas.DataFrame: Um DataFrame pandas com os dados da lista.
+
+    Note:
+        - A função inverte as linhas e colunas da lista de entrada por meio da operação de transposição.
+        - O DataFrame resultante é nomeado com colunas representando cada "Round" e uma coluna adicional "id".
+        - A coluna "id" contém identificadores associados aos dados com base na estrutura das entradas.
+        - Esta função assume que as variáveis globais self.global_rounds, self.args.num_clients, self.ids e self.obj_clients já estão definidas no objeto que chama a função.
+
+    Exemplo:
+        >>> obj = SuaClasse()
+        >>> lista_de_dados = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+        >>> df_resultante = obj.csv_clients(lista_de_dados)
+        >>> print(df_resultante)
+           Round 0  Round 1  Round 2  id
+        0        1        4        7   A
+        1        2        5        8   B
+        2        3        6        9   C
+    """
+
         # Faz a operação de transposição da lista, ou seja, inverte linhas e colunas
         lista = list(map(list, zip(*lista)))
         df = pd.DataFrame(lista)
         colum_names = []
-        for i in range(self.global_rounds+1):
-            colum_names.append(f'Round {i}')
-        df.columns = colum_names
 
-        id = []
-        tam = len(df) // (self.args.num_clients * (self.global_rounds + 1))
+        for i in range((self.global_rounds+1) * 2):
+            if i < 2:
+                colum_names.append(f'Round {i}')
+            else:
+                colum_names.append(f'id_round {i-2}')
+
+        # tam = len(df) / (self.args.num_clients * (self.global_rounds + 1))
+        
         chaves = []
         for i in range(len(self.ids)):
             chaves.extend([chave for chave, valor in self.obj_clients.items() if valor == self.ids[i]])
-        
-       
 
+        id = []  
         for valor in chaves:
-            x = [valor] * tam
+            x = [valor] #* tam
             id.extend(x)
-        df['id'] = id
-
+        print(id)
+        df['id_round 0'] = id[0:2]
+        df['id_round 1'] = id[2:]
+        df.columns = colum_names
         return df
 
 
-    def data_clursters(self, df, nCluster):
+    def data_clusters(self, df, nCluster):
+        """
+    Realiza a análise de clustering (agrupamento) em um DataFrame de dados.
+
+    Args:
+        df (pandas.DataFrame): O DataFrame contendo os dados que você deseja clusterizar.
+        nCluster (int): O número de clusters desejados para a análise de clustering.
+
+    Returns:
+        None
+
+    Note:
+        - A função renomeia o índice do DataFrame como "Index" para facilitar a manipulação.
+        - Ela realiza o agrupamento dos dados com base nas colunas e calcula a média dos valores dentro de cada grupo.
+        - Em seguida, normaliza os dados usando o StandardScaler.
+        - Utiliza o algoritmo K-Means para realizar o clustering com o número de clusters especificado em nCluster.
+        - Adiciona uma coluna 'cluster' ao DataFrame resultante, indicando a qual cluster cada ponto de dados pertence.
+        - A função não salva o DataFrame resultante em um arquivo CSV; essa linha de código está comentada.
+    
+    Exemplo:
+        >>> obj = SuaClasse()
+        >>> dados = pd.DataFrame({'A': [1, 2, 3, 4], 'B': [2, 3, 4, 5]})
+        >>> obj.data_clusters(dados, 2)
+        # Nenhum valor de retorno; a função realiza operações dentro do objeto.
+
+    """
+
         df = df.rename_axis("Index")
         colunas = df.columns
         colunas = colunas.tolist()
         grouped = df.groupby(colunas).mean().reset_index()
-        data_for_clustering = grouped[colunas[0:-1]]
+        data_for_clustering = grouped['Round 0']
         scaler = StandardScaler()
         normalized_data = scaler.fit_transform(data_for_clustering)
         k = nCluster
@@ -242,35 +341,50 @@ class Server(object):
         x = grouped[grouped_colunas]
         # x.to_csv('./csv/clientes.csv')
         
-        return grouped[grouped_colunas]
+        return x
 
+   
 
-    def clientes_cluster(self, df, cluster = int, objeto = dict):
+    def clientes_cluster(self, df, cluster=0, objeto=dict):
+        """
+        Retorna um dicionário contendo os identificadores de cliente como chaves e os valores associados aos clientes no cluster especificado.
+
+        Args:
+            df (pandas.DataFrame): O DataFrame contendo os dados de clientes, incluindo uma coluna 'cluster'.
+            cluster (int): O número do cluster para o qual você deseja obter os valores associados aos clientes. O valor padrão é 0.
+            objeto (dict): Um dicionário contendo valores associados a clientes.
+
+        Returns:
+            dict: Um novo dicionário contendo os identificadores de cliente como chaves e os valores associados aos clientes no cluster especificado.
+
+        Note:
+            - A função filtra o DataFrame df para selecionar apenas os clientes que pertencem ao cluster especificado.
+            - Em seguida, ela extrai os identificadores únicos dos clientes no cluster.
+            - Utiliza o dicionário objeto para encontrar os valores associados a esses identificadores e cria um novo dicionário com os identificadores como chaves e os valores associados como valores.
+            - Retorna o novo dicionário contendo os valores associados aos clientes no cluster.
+
+        Exemplo:
+            >>> obj = SuaClasse()
+            >>> dados = pd.DataFrame({'id': ['A', 'B', 'C', 'D'], 'cluster': [0, 1, 0, 1]})
+            >>> dicionario_global = {'A': 10, 'B': 15, 'C': 20, 'D': 25}
+            >>> novo_dicionario = obj.clientes_cluster(dados, cluster=0, objeto=dicionario_global)
+            >>> print(novo_dicionario)
+            {'A': 10, 'C': 20}
+
+        """
         df = df[df['cluster'] == cluster]
         x = df['id'].unique()
         obj = objeto
-        valores_obj = []
+        novo_dicionario = {}
         for valor in x:
             if valor in obj:
                 v = obj[valor]
-                valores_obj.append(v)
+                novo_dicionario[valor] = v
 
-        return valores_obj
+        return novo_dicionario
 
 
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= xxxxxxxxxxxxxxx -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-#
-    def add_parameters(self, w, client_model):
-        vp = []
-        valores = []
-       
-        for server_param, client_param in zip(self.global_model.parameters(), client_model.parameters()):
-            valores.extend(self.valueOfList(client_param.data))
-            server_param.data += client_param.data.clone() * w
-
-        vp.append(valores)
-        
-        return vp
-
 
 ######################################################################################
 
