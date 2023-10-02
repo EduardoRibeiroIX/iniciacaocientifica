@@ -1,6 +1,5 @@
 import sys
 import time
-import pandas as pd
 from flcore.clients.clientavg import clientAVG
 from flcore.servers.serverbase import Server
 from threading import Thread
@@ -46,6 +45,8 @@ class FedAvg(Server):
         
 
     def train(self):
+
+
         for i in range(self.global_rounds+1):
             if i == 0:
                 self.treinamento(i, self.select_clients())
@@ -56,7 +57,6 @@ class FedAvg(Server):
                 if self.auto_break and self.check_done(acc_lss=[self.rs_test_acc], top_cnt=self.top_cnt):
                     break
                 
-            self.count_rounds += 1
 
 
         print("\nBest accuracy.")
@@ -76,8 +76,16 @@ class FedAvg(Server):
 
         
         df_clientes = self.csv_clients(self.users)
-        df_cluster_clientes = self.data_clursters(df_clientes, 1)
-        clientes_do_cluster = self.clientes_cluster(df_cluster_clientes, 0, self.obj_clients)
-        print(f'==================> {clientes_do_cluster}')
-        
+        df_cluster_clientes = self.data_clusters(df_clientes, 1)
+        print('-=-' * 30)
+        print(df_cluster_clientes.head())
+        clientes_do_cluster_0 = self.clientes_cluster(df_cluster_clientes, 0, self.obj_clients)
+        print(f'==================> cluster 0: {clientes_do_cluster_0.keys()}')
+        clientes_do_cluster_1 = self.clientes_cluster(df_cluster_clientes, 1, self.obj_clients)
+        print(f'==================> cluster 1: {clientes_do_cluster_1.keys()}')
+        clientes_do_cluster_2 = self.clientes_cluster(df_cluster_clientes, 2, self.obj_clients)
+        print(f'==================> cluster 2: {clientes_do_cluster_2.keys()}')
+        clientes_do_cluster_3 = self.clientes_cluster(df_cluster_clientes, 3, self.obj_clients)
+        print(f'==================> cluster 3: {clientes_do_cluster_3.keys()}')
+        print('-=-' * 30)
         
