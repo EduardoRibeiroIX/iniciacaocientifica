@@ -52,11 +52,52 @@ class FedAvg(Server):
                 self.treinamento(i, self.select_clients())
                 if self.auto_break and self.check_done(acc_lss=[self.rs_test_acc], top_cnt=self.top_cnt):
                     break
-            else:
-                self.treinamento(i, self.select_clients())
+                df_clientes = self.csv_clients(self.users)
+                df_cluster_clientes = self.data_clusters(df_clientes, 4)
+                print(df_cluster_clientes)
+                # sys.exit()
+            elif i == 1:
+                clientes_do_cluster_0 = self.clientes_cluster(df_cluster_clientes, 0, self.obj_clients)
+                self.selected_clients = list(clientes_do_cluster_0[0].values())
+                self.treinamento(i, self.selected_clients)
+                if self.auto_break and self.check_done(acc_lss=[self.rs_test_acc], top_cnt=self.top_cnt):
+                    break
+
+                self.users = [clientes_do_cluster_0[1][0]]
+                self.obj_clients = clientes_do_cluster_0[0]
+                self.ids = list(clientes_do_cluster_0[0].values())
+
+                # print(self.ids)
+                # print(self.users)
+                # print(self.obj_clients)
+                # print(self.selected_clients)
+
+                df_clientes = self.csv_clients(self.users)
+                df_cluster_clientes = self.data_clusters(df_clientes, 3)
+                
+                
+                # print('-=-' * 30)
+                print(df_cluster_clientes)
+                # clientes_do_cluster_1 = self.clientes_cluster(df_cluster_clientes, 0, self.obj_clients)
+                # print(f'==================> cluster 0: {list(clientes_do_cluster_1[0].keys())}')
+                # clientes_do_cluster_2 = self.clientes_cluster(df_cluster_clientes, 1, self.obj_clients)
+                # print(f'==================> cluster 1: {list(clientes_do_cluster_2[0].keys())}')
+                # print('-=-' * 30)
+            elif i == 2:
+                clientes_do_cluster_0 = self.clientes_cluster(df_cluster_clientes, 0, self.obj_clients)
+                self.selected_clients = list(clientes_do_cluster_0[0].values())
+                self.treinamento(i, self.selected_clients)
                 if self.auto_break and self.check_done(acc_lss=[self.rs_test_acc], top_cnt=self.top_cnt):
                     break
                 
+                self.users = [clientes_do_cluster_0[1][0]]
+                self.obj_clients = clientes_do_cluster_0[0]
+                self.ids = list(clientes_do_cluster_0[0].values())
+
+                df_clientes = self.csv_clients(self.users)
+                df_cluster_clientes = self.data_clusters(df_clientes, 2)
+
+                print(df_cluster_clientes)
 
 
         print("\nBest accuracy.")
@@ -73,21 +114,4 @@ class FedAvg(Server):
             print(f"\n-------------Fine tuning round-------------")
             print("\nEvaluate new clients")
             self.evaluate()
-
-        
-        df_clientes = self.csv_clients(self.users)
-        # print(df_clientes)
-        # sys.exit()
-        df_cluster_clientes = self.data_clusters(df_clientes, 4)
-        print('-=-' * 30)
-        print(df_cluster_clientes.head())
-        clientes_do_cluster_0 = self.clientes_cluster(df_cluster_clientes, 0, self.obj_clients)
-        print(f'==================> cluster 0: {list(clientes_do_cluster_0.keys())}')
-        clientes_do_cluster_1 = self.clientes_cluster(df_cluster_clientes, 1, self.obj_clients)
-        print(f'==================> cluster 1: {list(clientes_do_cluster_1.keys())}')
-        clientes_do_cluster_2 = self.clientes_cluster(df_cluster_clientes, 2, self.obj_clients)
-        print(f'==================> cluster 2: {list(clientes_do_cluster_2.keys())}')
-        clientes_do_cluster_3 = self.clientes_cluster(df_cluster_clientes, 3, self.obj_clients)
-        print(f'==================> cluster 3: {list(clientes_do_cluster_3.keys())}')
-        print('-=-' * 30)
         

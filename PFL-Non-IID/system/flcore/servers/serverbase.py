@@ -276,27 +276,23 @@ class Server(object):
         df = pd.DataFrame(lista)
         colum_names = []
 
-        for i in range((self.global_rounds+1) * 2):
-            if i < 2:
-                colum_names.append(f'Round {i}')
-            else:
-                colum_names.append(f'id_round {i-2}')
+        colum_names.append(f'Media_clients')
+        colum_names.append(f'id_client')
 
-        # tam = len(df) / (self.args.num_clients * (self.global_rounds + 1))
-        
         chaves = []
         for i in range(len(self.ids)):
             chaves.extend([chave for chave, valor in self.obj_clients.items() if valor == self.ids[i]])
-
+        
         id = []  
         for valor in chaves:
             x = [valor] #* tam
             id.extend(x)
-        tam = (len(df))
-        df['id_round 0'] = id[0:tam]
-        df['id_round 1'] = id[tam:]
+        
+        df['id_client'] = id
         df.columns = colum_names
+       
         return df
+
 
 
     def data_clusters(self, df, nCluster):
@@ -330,7 +326,7 @@ class Server(object):
         colunas = df.columns
         colunas = colunas.tolist()
         grouped = df.groupby(colunas).mean().reset_index()
-        data_for_clustering = grouped[['Round 1']]
+        data_for_clustering = grouped[['Media_clients']]
         scaler = StandardScaler()
         normalized_data = scaler.fit_transform(data_for_clustering)
         k = nCluster
@@ -379,8 +375,9 @@ class Server(object):
             if valor in obj:
                 v = obj[valor]
                 novo_dicionario[valor] = v
-
-        return novo_dicionario
+        # print([df['Media_clients'].tolist()])
+        # sys.exit()
+        return (novo_dicionario, [df['Media_clients'].tolist()])
 
 
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= xxxxxxxxxxxxxxx -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-#
