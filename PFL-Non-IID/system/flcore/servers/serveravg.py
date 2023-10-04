@@ -76,16 +76,18 @@ class FedAvg(Server):
 
         
         df_clientes = self.csv_clients(self.users)
-        df_cluster_clientes = self.data_clusters(df_clientes, 1)
+        # print(df_clientes)
+        # sys.exit()
+        df_cluster_clientes = self.data_clusters(df_clientes, 4)
         print('-=-' * 30)
         print(df_cluster_clientes.head())
         clientes_do_cluster_0 = self.clientes_cluster(df_cluster_clientes, 0, self.obj_clients)
-        print(f'==================> cluster 0: {clientes_do_cluster_0.keys()}')
+        print(f'==================> cluster 0: {list(clientes_do_cluster_0.keys())}')
         clientes_do_cluster_1 = self.clientes_cluster(df_cluster_clientes, 1, self.obj_clients)
-        print(f'==================> cluster 1: {clientes_do_cluster_1.keys()}')
+        print(f'==================> cluster 1: {list(clientes_do_cluster_1.keys())}')
         clientes_do_cluster_2 = self.clientes_cluster(df_cluster_clientes, 2, self.obj_clients)
-        print(f'==================> cluster 2: {clientes_do_cluster_2.keys()}')
+        print(f'==================> cluster 2: {list(clientes_do_cluster_2.keys())}')
         clientes_do_cluster_3 = self.clientes_cluster(df_cluster_clientes, 3, self.obj_clients)
-        print(f'==================> cluster 3: {clientes_do_cluster_3.keys()}')
+        print(f'==================> cluster 3: {list(clientes_do_cluster_3.keys())}')
         print('-=-' * 30)
         

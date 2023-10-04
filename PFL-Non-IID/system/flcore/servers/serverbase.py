@@ -292,9 +292,9 @@ class Server(object):
         for valor in chaves:
             x = [valor] #* tam
             id.extend(x)
-        print(id)
-        df['id_round 0'] = id[0:2]
-        df['id_round 1'] = id[2:]
+        tam = (len(df))
+        df['id_round 0'] = id[0:tam]
+        df['id_round 1'] = id[tam:]
         df.columns = colum_names
         return df
 
@@ -330,7 +330,7 @@ class Server(object):
         colunas = df.columns
         colunas = colunas.tolist()
         grouped = df.groupby(colunas).mean().reset_index()
-        data_for_clustering = grouped['Round 0']
+        data_for_clustering = grouped[['Round 1']]
         scaler = StandardScaler()
         normalized_data = scaler.fit_transform(data_for_clustering)
         k = nCluster
@@ -340,9 +340,8 @@ class Server(object):
         grouped_colunas = grouped_colunas.tolist()
         x = grouped[grouped_colunas]
         # x.to_csv('./csv/clientes.csv')
-        
-        return x
 
+        return x
    
 
     def clientes_cluster(self, df, cluster=0, objeto=dict):
@@ -373,7 +372,7 @@ class Server(object):
 
         """
         df = df[df['cluster'] == cluster]
-        x = df['id'].unique()
+        x = df[df.columns[-2]].unique()
         obj = objeto
         novo_dicionario = {}
         for valor in x:
