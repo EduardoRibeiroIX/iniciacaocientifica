@@ -1,5 +1,6 @@
 import sys
 import time
+import pandas as pd
 from flcore.clients.clientavg import clientAVG
 from flcore.servers.serverbase import Server
 from threading import Thread
@@ -37,7 +38,7 @@ class FedAvg(Server):
 
         if self.dlg_eval and i%self.dlg_gap == 0:
             self.call_dlg(i)
-
+        
         self.users += self.aggregate_parameters()
         self.Budget.append(time.time() - s_t)
         print('-'*25, 'time cost', '-'*25, self.Budget[-1])
@@ -48,56 +49,52 @@ class FedAvg(Server):
 
 
         for i in range(self.global_rounds+1):
+            df = pd.DataFrame()
+            
             if i == 0:
                 self.treinamento(i, self.select_clients())
                 if self.auto_break and self.check_done(acc_lss=[self.rs_test_acc], top_cnt=self.top_cnt):
                     break
+                    
                 df_clientes = self.csv_clients(self.users)
                 df_cluster_clientes = self.data_clusters(df_clientes, 4)
                 print(df_cluster_clientes)
-                # sys.exit()
-            elif i == 1:
-                clientes_do_cluster_0 = self.clientes_cluster(df_cluster_clientes, 0, self.obj_clients)
-                self.selected_clients = list(clientes_do_cluster_0[0].values())
+
+            else:
+                clientes_Maior_cluster = self.clientes_cluster(df_cluster_clientes, self.obj_clients)
+                self.selected_clients = list(clientes_Maior_cluster[1].values())
+                df_clientes = self.csv_clients(self.users)
+                df = self.data_clusters(df_clientes, 4)
+                self.users = []
                 self.treinamento(i, self.selected_clients)
+                df = self.updated_data(df, clientes_Maior_cluster[0], self.users)
+                df_cluster_clientes = self.data_clusters(df, 4)
+                self.users = [df_cluster_clientes['Media_clients'].tolist()]
+                print(df_cluster_clientes)
                 if self.auto_break and self.check_done(acc_lss=[self.rs_test_acc], top_cnt=self.top_cnt):
                     break
-
-                self.users = [clientes_do_cluster_0[1][0]]
-                self.obj_clients = clientes_do_cluster_0[0]
-                self.ids = list(clientes_do_cluster_0[0].values())
+                
+                # self.users = [clientes_do_cluster_0[1][0]]
+                # self.obj_clients = clientes_do_cluster_0[0]
+                # self.ids = list(clientes_do_cluster_0[0].values())
 
                 # print(self.ids)
                 # print(self.users)
                 # print(self.obj_clients)
                 # print(self.selected_clients)
-
-                df_clientes = self.csv_clients(self.users)
-                df_cluster_clientes = self.data_clusters(df_clientes, 3)
+                # print(self.users)
+                # df_clientes = self.csv_clients(self.users)
+                # # sys.exit()
+                # df_cluster_clientes = self.data_clusters(df_clientes, 3)
                 
                 
-                # print('-=-' * 30)
-                print(df_cluster_clientes)
+                # # print('-=-' * 30)
+                # print(df_cluster_clientes)
                 # clientes_do_cluster_1 = self.clientes_cluster(df_cluster_clientes, 0, self.obj_clients)
                 # print(f'==================> cluster 0: {list(clientes_do_cluster_1[0].keys())}')
                 # clientes_do_cluster_2 = self.clientes_cluster(df_cluster_clientes, 1, self.obj_clients)
                 # print(f'==================> cluster 1: {list(clientes_do_cluster_2[0].keys())}')
                 # print('-=-' * 30)
-            elif i == 2:
-                clientes_do_cluster_0 = self.clientes_cluster(df_cluster_clientes, 0, self.obj_clients)
-                self.selected_clients = list(clientes_do_cluster_0[0].values())
-                self.treinamento(i, self.selected_clients)
-                if self.auto_break and self.check_done(acc_lss=[self.rs_test_acc], top_cnt=self.top_cnt):
-                    break
-                
-                self.users = [clientes_do_cluster_0[1][0]]
-                self.obj_clients = clientes_do_cluster_0[0]
-                self.ids = list(clientes_do_cluster_0[0].values())
-
-                df_clientes = self.csv_clients(self.users)
-                df_cluster_clientes = self.data_clusters(df_clientes, 2)
-
-                print(df_cluster_clientes)
 
 
         print("\nBest accuracy.")

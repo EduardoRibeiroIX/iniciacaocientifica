@@ -43,6 +43,7 @@ class Server(object):
         self.auto_break = args.auto_break
 
         self.clients = []
+        self.users_0 = []
         self.users = [] # contém os dados dos usuário
         self.ids = [] # contém os ids dos clientes a cada round de traino
         self.obj_clients = {} # contém os objetos da clase Client
@@ -132,7 +133,7 @@ class Server(object):
     def receive_models(self):
         assert (len(self.selected_clients) > 0)
 
-        active_clients = self.select_clients()
+        active_clients = self.selected_clients
 
         self.uploaded_ids = []
         self.uploaded_weights = []
@@ -280,7 +281,7 @@ class Server(object):
         colum_names.append(f'id_client')
 
         chaves = []
-        for i in range(len(self.ids)):
+        for i in range(len(self.users[0])):
             chaves.extend([chave for chave, valor in self.obj_clients.items() if valor == self.ids[i]])
         
         id = []  
@@ -292,7 +293,6 @@ class Server(object):
         df.columns = colum_names
        
         return df
-
 
 
     def data_clusters(self, df, nCluster):
@@ -340,7 +340,7 @@ class Server(object):
         return x
    
 
-    def clientes_cluster(self, df, cluster=0, objeto=dict):
+    def clientes_cluster(self, df, objeto=dict):
         """
         Retorna um dicionário contendo os identificadores de cliente como chaves e os valores associados aos clientes no cluster especificado.
 
@@ -367,7 +367,10 @@ class Server(object):
             {'A': 10, 'C': 20}
 
         """
-        df = df[df['cluster'] == cluster]
+        
+        contagem_clusters = df['cluster'].value_counts()
+        cluster_comum = contagem_clusters.idxmax()
+        df = df[df['cluster'] == cluster_comum]
         x = df[df.columns[-2]].unique()
         obj = objeto
         novo_dicionario = {}
@@ -375,12 +378,18 @@ class Server(object):
             if valor in obj:
                 v = obj[valor]
                 novo_dicionario[valor] = v
-        # print([df['Media_clients'].tolist()])
-        # sys.exit()
-        return (novo_dicionario, [df['Media_clients'].tolist()])
+        return (cluster_comum, novo_dicionario)
 
 
-#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= xxxxxxxxxxxxxxx -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-#
+    def updated_data(self, df_clusterizado, nCluster, news_data):
+        df_clusterizado.loc[df_clusterizado['cluster'] == nCluster, 'Media_clients'] = news_data[0]
+        self.users = [df_clusterizado['Media_clients'].tolist()]
+        return df_clusterizado[['Media_clients', 'id_client']]
+
+
+#-------------------------------- xxxxxxxxxxxxxxx --------------------------------------#
+
+
 ######################################################################################
 
 
@@ -466,7 +475,13 @@ class Server(object):
 
         test_acc = sum(stats[2])*1.0 / sum(stats[1])
         test_auc = sum(stats[3])*1.0 / sum(stats[1])
+        # with open("saida.txt", "w") as arquivo:
+        # # Escrever o valor da variável no arquivo
+        #     arquivo.write(str(test_acc))
         train_loss = sum(stats_train[2])*1.0 / sum(stats_train[1])
+        with open("saida.txt", "w") as arquivo:
+        # Escrever o valor da variável no arquivo
+            arquivo.write(str(test_acc) + "," + str(train_loss))
         accs = [a / n for a, n in zip(stats[2], stats[1])]
         aucs = [a / n for a, n in zip(stats[3], stats[1])]
         
