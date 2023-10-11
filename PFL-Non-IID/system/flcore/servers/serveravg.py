@@ -61,7 +61,7 @@ class FedAvg(Server):
                 print(df_cluster_clientes)
 
             else:
-                clientes_Maior_cluster = self.clientes_cluster(df_cluster_clientes, self.obj_clients)
+                clientes_Maior_cluster = self.clientes_cluster_random(df_cluster_clientes, self.obj_clients)
                 self.selected_clients = list(clientes_Maior_cluster[1].values())
                 df_clientes = self.csv_clients(self.users)
                 df = self.data_clusters(df_clientes, k)

@@ -389,62 +389,106 @@ class Server(object):
         return ([[cluster_comum, freq_comum], cluster_min], novo_dicionario)
 
 
-    def clientes_cluster_max(self, i, k, df, objeto=dict):
+    def clientes_cluster_random(self, df, objeto=dict):
         """
-        Retorna um dicionário contendo os identificadores de cliente como chaves e os valores associados aos clientes no cluster especificado.
+        Esta função retorna informações sobre dois clusters aleatórios e um dicionário atualizado.
 
-        Args:
-            df (pandas.DataFrame): O DataFrame contendo os dados de clientes, incluindo uma coluna 'cluster'.
-            cluster (int): O número do cluster para o qual você deseja obter os valores associados aos clientes. O valor padrão é 0.
-            objeto (dict): Um dicionário contendo valores associados a clientes.
+        Parâmetros:
+        - df (DataFrame): O DataFrame contendo os dados, incluindo uma coluna 'cluster' para agrupar os dados.
+        - objeto (dict): Um dicionário contendo valores associados aos clusters.
 
-        Returns:
-            dict: Um novo dicionário contendo os identificadores de cliente como chaves e os valores associados aos clientes no cluster especificado.
+        Retorno:
+        - Uma lista contendo informações sobre dois clusters aleatórios e um novo dicionário atualizado.
+        [cluster1, frequência_cluster1, cluster2], novo_dicionário
 
-        Note:
-            - A função filtra o DataFrame df para selecionar apenas os clientes que pertencem ao cluster especificado.
-            - Em seguida, ela extrai os identificadores únicos dos clientes no cluster.
-            - Utiliza o dicionário objeto para encontrar os valores associados a esses identificadores e cria um novo dicionário com os identificadores como chaves e os valores associados como valores.
-            - Retorna o novo dicionário contendo os valores associados aos clientes no cluster.
+        Descrição:
+        Esta função recebe um DataFrame com informações de cluster e um dicionário de objetos relacionados aos clusters.
+        Ela seleciona dois clusters aleatórios, extrai informações sobre eles, cria um novo DataFrame com os dados dos clusters
+        selecionados, extrai valores únicos de uma coluna no DataFrame resultante e atualiza o dicionário com valores associados a esses
+        clusters. Finalmente, ela retorna as informações sobre os dois clusters e o novo dicionário.
 
-        Exemplo:
-            >>> obj = SuaClasse()
-            >>> dados = pd.DataFrame({'id': ['A', 'B', 'C', 'D'], 'cluster': [0, 1, 0, 1]})
-            >>> dicionario_global = {'A': 10, 'B': 15, 'C': 20, 'D': 25}
-            >>> novo_dicionario = obj.clientes_cluster(dados, cluster=0, objeto=dicionario_global)
-            >>> print(novo_dicionario)
-            {'A': 10, 'C': 20}
-
+        Exemplo de uso:
+        df = pandas.DataFrame(...)
+        objeto = {'cluster1': 'valor1', 'cluster2': 'valor2', ...}
+        resultado = clientes_cluster_random(df, objeto)
         """
+        lista_cluster = df['cluster'].unique().tolist()
+        cluster_random = random.sample(lista_cluster, 2)
+        contagem_clusters = df['cluster'].value_counts()
+        cluster_a = cluster_random[0]
+        freq_a = contagem_clusters.get(cluster_a, 0)
+        cluster_b = cluster_random[1]
+        df1 = df[df['cluster'] == cluster_a]
+        df2 = df[df['cluster'] == cluster_b]
+        df = pd.concat([df1, df2], ignore_index=True)
+        x = df[df.columns[-2]].unique()
+        obj = objeto
+        novo_dicionario = {}
+
+        for valor in x:
+            if valor in obj:
+                v = obj[valor]
+                novo_dicionario[valor] = v
+
+        return ([[cluster_a, freq_a], cluster_b], novo_dicionario)
+
+
+    # def clientes_cluster_max(self, df, objeto=dict):
+    #     """
+    #     Retorna um dicionário contendo os identificadores de cliente como chaves e os valores associados aos clientes no cluster especificado.
+
+    #     Args:
+    #         df (pandas.DataFrame): O DataFrame contendo os dados de clientes, incluindo uma coluna 'cluster'.
+    #         cluster (int): O número do cluster para o qual você deseja obter os valores associados aos clientes. O valor padrão é 0.
+    #         objeto (dict): Um dicionário contendo valores associados a clientes.
+
+    #     Returns:
+    #         dict: Um novo dicionário contendo os identificadores de cliente como chaves e os valores associados aos clientes no cluster especificado.
+
+    #     Note:
+    #         - A função filtra o DataFrame df para selecionar apenas os clientes que pertencem ao cluster especificado.
+    #         - Em seguida, ela extrai os identificadores únicos dos clientes no cluster.
+    #         - Utiliza o dicionário objeto para encontrar os valores associados a esses identificadores e cria um novo dicionário com os identificadores como chaves e os valores associados como valores.
+    #         - Retorna o novo dicionário contendo os valores associados aos clientes no cluster.
+
+    #     Exemplo:
+    #         >>> obj = SuaClasse()
+    #         >>> dados = pd.DataFrame({'id': ['A', 'B', 'C', 'D'], 'cluster': [0, 1, 0, 1]})
+    #         >>> dicionario_global = {'A': 10, 'B': 15, 'C': 20, 'D': 25}
+    #         >>> novo_dicionario = obj.clientes_cluster(dados, cluster=0, objeto=dicionario_global)
+    #         >>> print(novo_dicionario)
+    #         {'A': 10, 'C': 20}
+
+    #     """
         
-        contagem_clusters = df['cluster'].value_counts()
-        cluster_comum = contagem_clusters.idxmax()
-        # cluster_min = random.randint()
-        df = df[df['cluster'] == cluster_comum]
-        x = df[df.columns[-2]].unique()
-        obj = objeto
-        novo_dicionario = {}
-        for valor in x:
-            if valor in obj:
-                v = obj[valor]
-                novo_dicionario[valor] = v
+    #     contagem_clusters = df['cluster'].value_counts()
+    #     cluster_comum = contagem_clusters.idxmax()
+    #     # cluster_min = random.randint()
+    #     df = df[df['cluster'] == cluster_comum]
+    #     x = df[df.columns[-2]].unique()
+    #     obj = objeto
+    #     novo_dicionario = {}
+    #     for valor in x:
+    #         if valor in obj:
+    #             v = obj[valor]
+    #             novo_dicionario[valor] = v
 
-        return (cluster_comum, novo_dicionario)
+    #     return (cluster_comum, novo_dicionario)
 
 
-    def clientes_cluster_min(self, i, k, df, objeto=dict):
-        contagem_clusters = df['cluster'].value_counts()
-        cluster_comum = contagem_clusters.idxmin()
-        df = df[df['cluster'] == cluster_comum]
-        x = df[df.columns[-2]].unique()
-        obj = objeto
-        novo_dicionario = {}
-        for valor in x:
-            if valor in obj:
-                v = obj[valor]
-                novo_dicionario[valor] = v
+    # def clientes_cluster_min(self, df, objeto=dict):
+    #     contagem_clusters = df['cluster'].value_counts()
+    #     cluster_comum = contagem_clusters.idxmin()
+    #     df = df[df['cluster'] == cluster_comum]
+    #     x = df[df.columns[-2]].unique()
+    #     obj = objeto
+    #     novo_dicionario = {}
+    #     for valor in x:
+    #         if valor in obj:
+    #             v = obj[valor]
+    #             novo_dicionario[valor] = v
 
-        return (cluster_comum, novo_dicionario)
+    #     return (cluster_comum, novo_dicionario)
 
 
     def updated_data(self, df_clusterizado, nCluster, news_data):
