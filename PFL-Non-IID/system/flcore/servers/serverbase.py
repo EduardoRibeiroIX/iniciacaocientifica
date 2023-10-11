@@ -340,7 +340,7 @@ class Server(object):
         return x
    
 
-    def clientes_cluster(self, i, k, df, objeto=dict):
+    def clientes_cluster(self, df, objeto=dict):
         """
         Retorna um dicionário contendo os identificadores de cliente como chaves e os valores associados aos clientes no cluster especificado.
 
@@ -385,7 +385,7 @@ class Server(object):
             if valor in obj:
                 v = obj[valor]
                 novo_dicionario[valor] = v
-                
+
         return ([[cluster_comum, freq_comum], cluster_min], novo_dicionario)
 
 
