@@ -226,7 +226,7 @@ class Server(object):
         valueList = list()
     
         if type(value) == torch.Tensor:
-            value = value.numpy()
+            value = value.cpu().numpy()
             value = value.tolist()
             self.valueOfList(value)
 
@@ -340,7 +340,7 @@ class Server(object):
         return x
    
 
-    def clientes_cluster(self, df, objeto=dict):
+    def clientes_cluster(self, i, k, df, objeto=dict):
         """
         Retorna um dicionário contendo os identificadores de cliente como chaves e os valores associados aos clientes no cluster especificado.
 
@@ -370,6 +370,56 @@ class Server(object):
         
         contagem_clusters = df['cluster'].value_counts()
         cluster_comum = contagem_clusters.idxmax()
+        freq_comum = contagem_clusters.max()
+        cluster_min = contagem_clusters.idxmin()
+
+        df1 = df[df['cluster'] == cluster_comum]
+        df2 = df[df['cluster'] == cluster_min]
+
+        df = pd.concat([df1, df2], ignore_index=True)
+        x = df[df.columns[-2]].unique()
+        obj = objeto
+        novo_dicionario = {}
+
+        for valor in x:
+            if valor in obj:
+                v = obj[valor]
+                novo_dicionario[valor] = v
+                
+        return ([[cluster_comum, freq_comum], cluster_min], novo_dicionario)
+
+
+    def clientes_cluster_max(self, i, k, df, objeto=dict):
+        """
+        Retorna um dicionário contendo os identificadores de cliente como chaves e os valores associados aos clientes no cluster especificado.
+
+        Args:
+            df (pandas.DataFrame): O DataFrame contendo os dados de clientes, incluindo uma coluna 'cluster'.
+            cluster (int): O número do cluster para o qual você deseja obter os valores associados aos clientes. O valor padrão é 0.
+            objeto (dict): Um dicionário contendo valores associados a clientes.
+
+        Returns:
+            dict: Um novo dicionário contendo os identificadores de cliente como chaves e os valores associados aos clientes no cluster especificado.
+
+        Note:
+            - A função filtra o DataFrame df para selecionar apenas os clientes que pertencem ao cluster especificado.
+            - Em seguida, ela extrai os identificadores únicos dos clientes no cluster.
+            - Utiliza o dicionário objeto para encontrar os valores associados a esses identificadores e cria um novo dicionário com os identificadores como chaves e os valores associados como valores.
+            - Retorna o novo dicionário contendo os valores associados aos clientes no cluster.
+
+        Exemplo:
+            >>> obj = SuaClasse()
+            >>> dados = pd.DataFrame({'id': ['A', 'B', 'C', 'D'], 'cluster': [0, 1, 0, 1]})
+            >>> dicionario_global = {'A': 10, 'B': 15, 'C': 20, 'D': 25}
+            >>> novo_dicionario = obj.clientes_cluster(dados, cluster=0, objeto=dicionario_global)
+            >>> print(novo_dicionario)
+            {'A': 10, 'C': 20}
+
+        """
+        
+        contagem_clusters = df['cluster'].value_counts()
+        cluster_comum = contagem_clusters.idxmax()
+        # cluster_min = random.randint()
         df = df[df['cluster'] == cluster_comum]
         x = df[df.columns[-2]].unique()
         obj = objeto
@@ -378,11 +428,35 @@ class Server(object):
             if valor in obj:
                 v = obj[valor]
                 novo_dicionario[valor] = v
+
+        return (cluster_comum, novo_dicionario)
+
+
+    def clientes_cluster_min(self, i, k, df, objeto=dict):
+        contagem_clusters = df['cluster'].value_counts()
+        cluster_comum = contagem_clusters.idxmin()
+        df = df[df['cluster'] == cluster_comum]
+        x = df[df.columns[-2]].unique()
+        obj = objeto
+        novo_dicionario = {}
+        for valor in x:
+            if valor in obj:
+                v = obj[valor]
+                novo_dicionario[valor] = v
+
         return (cluster_comum, novo_dicionario)
 
 
     def updated_data(self, df_clusterizado, nCluster, news_data):
-        df_clusterizado.loc[df_clusterizado['cluster'] == nCluster, 'Media_clients'] = news_data[0]
+        # print(df_clusterizado)
+        # print(nCluster)
+        # print(news_data)
+        df_clusterizado.loc[df_clusterizado['cluster'] == nCluster[0][0], 'Media_clients'] = news_data[0][:nCluster[0][1]]
+        # print(df_clusterizado)
+        # print('---------------------------------------------------')
+        df_clusterizado.loc[df_clusterizado['cluster'] == nCluster[1], 'Media_clients'] = news_data[0][nCluster[0][1]:]
+        # print(df_clusterizado)
+        # sys.exit()
         self.users = [df_clusterizado['Media_clients'].tolist()]
         return df_clusterizado[['Media_clients', 'id_client']]
 
@@ -479,7 +553,7 @@ class Server(object):
         # # Escrever o valor da variável no arquivo
         #     arquivo.write(str(test_acc))
         train_loss = sum(stats_train[2])*1.0 / sum(stats_train[1])
-        with open("saida.txt", "w") as arquivo:
+        with open("saida.txt", "a") as arquivo:
         # Escrever o valor da variável no arquivo
             arquivo.write(str(test_acc) + "," + str(train_loss))
         accs = [a / n for a, n in zip(stats[2], stats[1])]
