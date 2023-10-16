@@ -432,32 +432,26 @@ class Server(object):
 
     def clientes_cluster_max(self, df, objeto=dict):
         """
-        Retorna um dicionário contendo os identificadores de cliente como chaves e os valores associados aos clientes no cluster especificado.
+    Retorna o cluster com o maior número de ocorrências e um dicionário de correspondências.
 
-        Args:
-            df (pandas.DataFrame): O DataFrame contendo os dados de clientes, incluindo uma coluna 'cluster'.
-            cluster (int): O número do cluster para o qual você deseja obter os valores associados aos clientes. O valor padrão é 0.
-            objeto (dict): Um dicionário contendo valores associados a clientes.
+    Parâmetros:
+    - df (DataFrame): O DataFrame contendo os dados dos clientes.
+    - objeto (dict, opcional): Um dicionário de correspondências entre valores e seus equivalentes desejados.
 
-        Returns:
-            dict: Um novo dicionário contendo os identificadores de cliente como chaves e os valores associados aos clientes no cluster especificado.
+    Retorna:
+    - Tuple: Uma tupla contendo o cluster com o maior número de ocorrências e um dicionário de correspondências.
 
-        Note:
-            - A função filtra o DataFrame df para selecionar apenas os clientes que pertencem ao cluster especificado.
-            - Em seguida, ela extrai os identificadores únicos dos clientes no cluster.
-            - Utiliza o dicionário objeto para encontrar os valores associados a esses identificadores e cria um novo dicionário com os identificadores como chaves e os valores associados como valores.
-            - Retorna o novo dicionário contendo os valores associados aos clientes no cluster.
+    Descrição:
+    Esta função analisa o DataFrame 'df' para encontrar o cluster com o maior número de ocorrências. Em seguida, cria um dicionário 'novo_dicionario' que mapeia os valores exclusivos da penúltima coluna do DataFrame para seus equivalentes em 'objeto', se houver correspondência.
 
-        Exemplo:
-            >>> obj = SuaClasse()
-            >>> dados = pd.DataFrame({'id': ['A', 'B', 'C', 'D'], 'cluster': [0, 1, 0, 1]})
-            >>> dicionario_global = {'A': 10, 'B': 15, 'C': 20, 'D': 25}
-            >>> novo_dicionario = obj.clientes_cluster(dados, cluster=0, objeto=dicionario_global)
-            >>> print(novo_dicionario)
-            {'A': 10, 'C': 20}
+    Exemplo de uso:
+    >>> df = pd.DataFrame({'id_client': [1, 2, 3, 4], 'cluster': [0, 1, 0, 1], 'data': [10, 20, 30, 40]})
+    >>> objeto = {10: 'A', 30: 'B'}
+    >>> instancia.clientes_cluster_max(df, objeto)
+    Retorna uma tupla contendo o cluster com o maior número de ocorrências e um dicionário de correspondências.
 
-        """
-        
+    """
+
         contagem_clusters = df['cluster'].value_counts()
         cluster_comum = contagem_clusters.idxmax()
         # cluster_min = random.randint()
