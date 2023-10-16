@@ -544,6 +544,7 @@ class Server(object):
         selecaoo = df_clusterizado.loc[selecao, 'Media_clients']
         dados = news_data[0][nCluster[0][1]:]
         print(f'{len(selecaoo)} <==========> {len(dados)}')
+        
         df_clusterizado.loc[selecao, 'Media_clients'] = dados
         self.users = [df_clusterizado['Media_clients'].tolist()]
 
