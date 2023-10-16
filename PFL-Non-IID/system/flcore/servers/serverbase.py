@@ -489,6 +489,37 @@ class Server(object):
 
 
     def updated_data(self, df_clusterizado, nCluster, news_data):
+        """
+    Atualiza os dados de um DataFrame 'df_clusterizado' com informações de clusters.
+
+    Parâmetros:
+    - df_clusterizado (DataFrame): O DataFrame contendo os dados a serem atualizados.
+    - nCluster (list of lists): Uma lista de listas que descrevem os clusters. Cada lista interna
+      contém informações sobre o cluster, como cluster ID e tamanho.
+    - news_data (list): Uma lista contendo os novos dados a serem incorporados aos clusters.
+
+    Retorna:
+    - DataFrame: O DataFrame 'df_clusterizado' atualizado com a coluna 'Media_clients' preenchida
+      com base nas informações do 'news_data'. O DataFrame resultante contém apenas as colunas
+      'Media_clients' e 'id_client'.
+
+    Descrição:
+    Esta função atualiza o DataFrame 'df_clusterizado' preenchendo a coluna 'Media_clients' com base
+    nas informações do 'news_data'. Os clusters são identificados com base nas informações em 'nCluster',
+    e os dados correspondentes são atribuídos a cada cluster com base nas informações de tamanho.
+
+    A função também atualiza o atributo de classe 'users' com uma lista contendo os valores da coluna
+    'Media_clients'.
+
+    Exemplo de uso:
+    >>> df = pd.DataFrame({'id_client': [1, 2, 3, 4], 'cluster': [0, 1, 0, 1]})
+    >>> nCluster = [[0, 2], 1]
+    >>> news_data = [[10, 20, 30, 40]]
+    >>> instancia.updated_data(df, nCluster, news_data)
+    Retorna o DataFrame atualizado com a coluna 'Media_clients' preenchida.
+
+    """
+
         df_clusterizado.loc[df_clusterizado['cluster'] == nCluster[0][0], 'Media_clients'] = news_data[0][:nCluster[0][1]]
         df_clusterizado.loc[df_clusterizado['cluster'] == nCluster[1], 'Media_clients'] = news_data[0][nCluster[0][1]:]
         self.users = [df_clusterizado['Media_clients'].tolist()]
@@ -592,9 +623,6 @@ class Server(object):
 
         test_acc = sum(stats[2])*1.0 / sum(stats[1])
         test_auc = sum(stats[3])*1.0 / sum(stats[1])
-        # with open("saida.txt", "w") as arquivo:
-        # # Escrever o valor da variável no arquivo
-        #     arquivo.write(str(test_acc))
         train_loss = sum(stats_train[2])*1.0 / sum(stats_train[1])
         with open("saida.txt", "a") as arquivo:
         # Escrever o valor da variável no arquivo
