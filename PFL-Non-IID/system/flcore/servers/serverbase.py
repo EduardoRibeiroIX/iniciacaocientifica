@@ -74,6 +74,7 @@ class Server(object):
         self.eval_new_clients = False
         self.fine_tuning_epoch = args.fine_tuning_epoch
 
+
     def set_clients(self, clientObj):
         for i, train_slow, send_slow in zip(range(self.num_clients), self.train_slow_clients, self.send_slow_clients):
             train_data = read_client_data(self.dataset, i, is_train=True)
@@ -96,11 +97,13 @@ class Server(object):
 
         return slow_clients
 
+
     def set_slow_clients(self):
         self.train_slow_clients = self.select_slow_clients(
             self.train_slow_rate)
         self.send_slow_clients = self.select_slow_clients(
             self.send_slow_rate)
+
 
     def select_clients(self):
         if self.random_join_ratio:
@@ -114,7 +117,8 @@ class Server(object):
             self.obj_clients[nome] = objeto
         
         return list(self.obj_clients.values())
-    
+
+
     def send_models(self):
         assert (len(self.clients) > 0)
 
@@ -191,7 +195,6 @@ class Server(object):
         
         return media
     
-
 
 #-------------------------------- My functions---------------------------------------#
 
@@ -342,51 +345,45 @@ class Server(object):
 
     def clientes_cluster(self, df, objeto=dict):
         """
-        Retorna um dicionário contendo os identificadores de cliente como chaves e os valores associados aos clientes no cluster especificado.
+            Retorna informações sobre os clusters mais e menos frequentes em um DataFrame e um dicionário personalizado.
 
-        Args:
-            df (pandas.DataFrame): O DataFrame contendo os dados de clientes, incluindo uma coluna 'cluster'.
-            cluster (int): O número do cluster para o qual você deseja obter os valores associados aos clientes. O valor padrão é 0.
-            objeto (dict): Um dicionário contendo valores associados a clientes.
+            Parâmetros:
+            df (DataFrame): O DataFrame contendo os dados dos clientes, incluindo uma coluna 'cluster'.
+            objeto (dict): Um dicionário personalizado contendo valores associados aos clusters.
 
-        Returns:
-            dict: Um novo dicionário contendo os identificadores de cliente como chaves e os valores associados aos clientes no cluster especificado.
+            Retorna:
+            list: Uma lista contendo informações sobre os clusters mais e menos frequentes e um dicionário personalizado.
 
-        Note:
-            - A função filtra o DataFrame df para selecionar apenas os clientes que pertencem ao cluster especificado.
-            - Em seguida, ela extrai os identificadores únicos dos clientes no cluster.
-            - Utiliza o dicionário objeto para encontrar os valores associados a esses identificadores e cria um novo dicionário com os identificadores como chaves e os valores associados como valores.
-            - Retorna o novo dicionário contendo os valores associados aos clientes no cluster.
-
-        Exemplo:
-            >>> obj = SuaClasse()
-            >>> dados = pd.DataFrame({'id': ['A', 'B', 'C', 'D'], 'cluster': [0, 1, 0, 1]})
-            >>> dicionario_global = {'A': 10, 'B': 15, 'C': 20, 'D': 25}
-            >>> novo_dicionario = obj.clientes_cluster(dados, cluster=0, objeto=dicionario_global)
-            >>> print(novo_dicionario)
-            {'A': 10, 'C': 20}
-
+            Exemplo:
+            >>> df = pd.DataFrame({'cliente_id': [1, 2, 3, 4, 5],
+            ...                    'cluster': ['A', 'B', 'A', 'B', 'A']})
+            >>> obj = {'A': 'Alto', 'B': 'Baixo'}
+            >>> clientes_cluster(df, obj)
+            [['A', 3], 'B'], {'A': 'Alto', 'B': 'Baixo'}
         """
-        
+        # Calcula a contagem de clusters
         contagem_clusters = df['cluster'].value_counts()
-        cluster_comum = contagem_clusters.idxmax()
-        freq_comum = contagem_clusters.max()
-        cluster_min = contagem_clusters.idxmin()
+        cluster_a = contagem_clusters.idxmax()
+        freq_a = contagem_clusters.get(cluster_a, 0)
+        cluster_b = contagem_clusters.idxmin()
 
-        df1 = df[df['cluster'] == cluster_comum]
-        df2 = df[df['cluster'] == cluster_min]
-
+        # Separa os DataFrames para os clusters mais e menos frequentes
+        df1 = df[df['cluster'] == cluster_a]
+        df2 = df[df['cluster'] == cluster_b]
         df = pd.concat([df1, df2], ignore_index=True)
+
+        # Obtém os valores únicos da coluna de cluster
         x = df[df.columns[-2]].unique()
         obj = objeto
-        novo_dicionario = {}
+        novo_dicionário = {}
 
+        # Mapeia valores do objeto personalizado para os clusters
         for valor in x:
             if valor in obj:
                 v = obj[valor]
-                novo_dicionario[valor] = v
+                novo_dicionário[valor] = v
 
-        return ([[cluster_comum, freq_comum], cluster_min], novo_dicionario)
+        return ([[cluster_a, freq_a], cluster_b], novo_dicionário)
 
 
     def clientes_cluster_random(self, df, objeto=dict):
@@ -433,75 +430,69 @@ class Server(object):
         return ([[cluster_a, freq_a], cluster_b], novo_dicionario)
 
 
-    # def clientes_cluster_max(self, df, objeto=dict):
-    #     """
-    #     Retorna um dicionário contendo os identificadores de cliente como chaves e os valores associados aos clientes no cluster especificado.
+    def clientes_cluster_max(self, df, objeto=dict):
+        """
+        Retorna um dicionário contendo os identificadores de cliente como chaves e os valores associados aos clientes no cluster especificado.
 
-    #     Args:
-    #         df (pandas.DataFrame): O DataFrame contendo os dados de clientes, incluindo uma coluna 'cluster'.
-    #         cluster (int): O número do cluster para o qual você deseja obter os valores associados aos clientes. O valor padrão é 0.
-    #         objeto (dict): Um dicionário contendo valores associados a clientes.
+        Args:
+            df (pandas.DataFrame): O DataFrame contendo os dados de clientes, incluindo uma coluna 'cluster'.
+            cluster (int): O número do cluster para o qual você deseja obter os valores associados aos clientes. O valor padrão é 0.
+            objeto (dict): Um dicionário contendo valores associados a clientes.
 
-    #     Returns:
-    #         dict: Um novo dicionário contendo os identificadores de cliente como chaves e os valores associados aos clientes no cluster especificado.
+        Returns:
+            dict: Um novo dicionário contendo os identificadores de cliente como chaves e os valores associados aos clientes no cluster especificado.
 
-    #     Note:
-    #         - A função filtra o DataFrame df para selecionar apenas os clientes que pertencem ao cluster especificado.
-    #         - Em seguida, ela extrai os identificadores únicos dos clientes no cluster.
-    #         - Utiliza o dicionário objeto para encontrar os valores associados a esses identificadores e cria um novo dicionário com os identificadores como chaves e os valores associados como valores.
-    #         - Retorna o novo dicionário contendo os valores associados aos clientes no cluster.
+        Note:
+            - A função filtra o DataFrame df para selecionar apenas os clientes que pertencem ao cluster especificado.
+            - Em seguida, ela extrai os identificadores únicos dos clientes no cluster.
+            - Utiliza o dicionário objeto para encontrar os valores associados a esses identificadores e cria um novo dicionário com os identificadores como chaves e os valores associados como valores.
+            - Retorna o novo dicionário contendo os valores associados aos clientes no cluster.
 
-    #     Exemplo:
-    #         >>> obj = SuaClasse()
-    #         >>> dados = pd.DataFrame({'id': ['A', 'B', 'C', 'D'], 'cluster': [0, 1, 0, 1]})
-    #         >>> dicionario_global = {'A': 10, 'B': 15, 'C': 20, 'D': 25}
-    #         >>> novo_dicionario = obj.clientes_cluster(dados, cluster=0, objeto=dicionario_global)
-    #         >>> print(novo_dicionario)
-    #         {'A': 10, 'C': 20}
+        Exemplo:
+            >>> obj = SuaClasse()
+            >>> dados = pd.DataFrame({'id': ['A', 'B', 'C', 'D'], 'cluster': [0, 1, 0, 1]})
+            >>> dicionario_global = {'A': 10, 'B': 15, 'C': 20, 'D': 25}
+            >>> novo_dicionario = obj.clientes_cluster(dados, cluster=0, objeto=dicionario_global)
+            >>> print(novo_dicionario)
+            {'A': 10, 'C': 20}
 
-    #     """
+        """
         
-    #     contagem_clusters = df['cluster'].value_counts()
-    #     cluster_comum = contagem_clusters.idxmax()
-    #     # cluster_min = random.randint()
-    #     df = df[df['cluster'] == cluster_comum]
-    #     x = df[df.columns[-2]].unique()
-    #     obj = objeto
-    #     novo_dicionario = {}
-    #     for valor in x:
-    #         if valor in obj:
-    #             v = obj[valor]
-    #             novo_dicionario[valor] = v
+        contagem_clusters = df['cluster'].value_counts()
+        cluster_comum = contagem_clusters.idxmax()
+        # cluster_min = random.randint()
+        df = df[df['cluster'] == cluster_comum]
+        x = df[df.columns[-2]].unique()
+        obj = objeto
+        novo_dicionario = {}
+        for valor in x:
+            if valor in obj:
+                v = obj[valor]
+                novo_dicionario[valor] = v
 
-    #     return (cluster_comum, novo_dicionario)
+        return (cluster_comum, novo_dicionario)
 
 
-    # def clientes_cluster_min(self, df, objeto=dict):
-    #     contagem_clusters = df['cluster'].value_counts()
-    #     cluster_comum = contagem_clusters.idxmin()
-    #     df = df[df['cluster'] == cluster_comum]
-    #     x = df[df.columns[-2]].unique()
-    #     obj = objeto
-    #     novo_dicionario = {}
-    #     for valor in x:
-    #         if valor in obj:
-    #             v = obj[valor]
-    #             novo_dicionario[valor] = v
+    def clientes_cluster_min(self, df, objeto=dict):
+        contagem_clusters = df['cluster'].value_counts()
+        cluster_comum = contagem_clusters.idxmin()
+        df = df[df['cluster'] == cluster_comum]
+        x = df[df.columns[-2]].unique()
+        obj = objeto
+        novo_dicionario = {}
+        for valor in x:
+            if valor in obj:
+                v = obj[valor]
+                novo_dicionario[valor] = v
 
-    #     return (cluster_comum, novo_dicionario)
+        return (cluster_comum, novo_dicionario)
 
 
     def updated_data(self, df_clusterizado, nCluster, news_data):
-        # print(df_clusterizado)
-        # print(nCluster)
-        # print(news_data)
         df_clusterizado.loc[df_clusterizado['cluster'] == nCluster[0][0], 'Media_clients'] = news_data[0][:nCluster[0][1]]
-        # print(df_clusterizado)
-        # print('---------------------------------------------------')
         df_clusterizado.loc[df_clusterizado['cluster'] == nCluster[1], 'Media_clients'] = news_data[0][nCluster[0][1]:]
-        # print(df_clusterizado)
-        # sys.exit()
         self.users = [df_clusterizado['Media_clients'].tolist()]
+
         return df_clusterizado[['Media_clients', 'id_client']]
 
 
@@ -518,17 +509,20 @@ class Server(object):
         model_path = os.path.join(model_path, self.algorithm + "_server" + ".pt")
         torch.save(self.global_model, model_path)
 
+
     def load_model(self):
         model_path = os.path.join("models", self.dataset)
         model_path = os.path.join(model_path, self.algorithm + "_server" + ".pt")
         assert (os.path.exists(model_path))
         self.global_model = torch.load(model_path)
 
+
     def model_exists(self):
         model_path = os.path.join("models", self.dataset)
         model_path = os.path.join(model_path, self.algorithm + "_server" + ".pt")
         return os.path.exists(model_path)
-        
+
+
     def save_results(self):
         algo = self.dataset + "_" + self.algorithm
         result_path = "../results/"
@@ -545,13 +539,16 @@ class Server(object):
                 hf.create_dataset('rs_test_auc', data=self.rs_test_auc)
                 hf.create_dataset('rs_train_loss', data=self.rs_train_loss)
 
+
     def save_item(self, item, item_name):
         if not os.path.exists(self.save_folder_name):
             os.makedirs(self.save_folder_name)
         torch.save(item, os.path.join(self.save_folder_name, "server_" + item_name + ".pt"))
 
+
     def load_item(self, item_name):
         return torch.load(os.path.join(self.save_folder_name, "server_" + item_name + ".pt"))
+
 
     def test_metrics(self):
         if self.eval_new_clients and self.num_new_clients > 0:
@@ -571,6 +568,7 @@ class Server(object):
 
         return ids, num_samples, tot_correct, tot_auc
 
+
     def train_metrics(self):
         if self.eval_new_clients and self.num_new_clients > 0:
             return [0], [1], [0]
@@ -585,6 +583,7 @@ class Server(object):
         ids = [c.id for c in self.clients]
 
         return ids, num_samples, losses
+
 
     # evaluate selected clients
     def evaluate(self, acc=None, loss=None):
@@ -620,10 +619,12 @@ class Server(object):
         print("Std Test Accurancy: {:.4f}".format(np.std(accs)))
         print("Std Test AUC: {:.4f}".format(np.std(aucs)))
 
+
     def print_(self, test_acc, test_auc, train_loss):
         print("Average Test Accurancy: {:.4f}".format(test_acc))
         print("Average Test AUC: {:.4f}".format(test_auc))
         print("Average Train Loss: {:.4f}".format(train_loss))
+
 
     def check_done(self, acc_lss, top_cnt=None, div_value=None):
         for acc_ls in acc_lss:
@@ -649,6 +650,7 @@ class Server(object):
             else:
                 raise NotImplementedError
         return True
+
 
     def call_dlg(self, R):
         # items = []
@@ -689,6 +691,7 @@ class Server(object):
 
         # self.save_item(items, f'DLG_{R}')
 
+
     def set_new_clients(self, clientObj):
         for i in range(self.num_clients, self.num_clients + self.num_new_clients):
             train_data = read_client_data(self.dataset, i, is_train=True)
@@ -700,6 +703,7 @@ class Server(object):
                             train_slow=False, 
                             send_slow=False)
             self.new_clients.append(client)
+
 
     # fine-tuning on new clients
     def fine_tuning_new_clients(self):
@@ -721,6 +725,7 @@ class Server(object):
                     opt.zero_grad()
                     loss.backward()
                     opt.step()
+
 
     # evaluating on new clients
     def test_metrics_new_clients(self):
