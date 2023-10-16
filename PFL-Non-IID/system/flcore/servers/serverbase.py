@@ -534,9 +534,17 @@ class Server(object):
     Retorna o DataFrame atualizado com a coluna 'Media_clients' preenchida.
 
     """
+        selecao = df_clusterizado['cluster'] == nCluster[0][0]
+        selecaoo = df_clusterizado.loc[selecao, 'Media_clients']
+        dados = news_data[0][:nCluster[0][1]]
+        print(f'{len(selecaoo)} <==========> {len(dados)}')
+        df_clusterizado.loc[selecao, 'Media_clients'] = dados
 
-        df_clusterizado.loc[df_clusterizado['cluster'] == nCluster[0][0], 'Media_clients'] = news_data[0][:nCluster[0][1]]
-        df_clusterizado.loc[df_clusterizado['cluster'] == nCluster[1], 'Media_clients'] = news_data[0][nCluster[0][1]:]
+        selecao = df_clusterizado['cluster'] == nCluster[1]
+        selecaoo = df_clusterizado.loc[selecao, 'Media_clients']
+        dados = news_data[0][nCluster[0][1]:]
+        print(f'{len(selecaoo)} <==========> {len(dados)}')
+        df_clusterizado.loc[selecao, 'Media_clients'] = dados
         self.users = [df_clusterizado['Media_clients'].tolist()]
 
         return df_clusterizado[['Media_clients', 'id_client']]
