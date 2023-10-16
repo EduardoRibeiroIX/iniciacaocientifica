@@ -474,6 +474,27 @@ class Server(object):
 
 
     def clientes_cluster_min(self, df, objeto=dict):
+        """
+    Retorna o cluster com o menor número de ocorrências e um dicionário de correspondências.
+
+    Parâmetros:
+    - df (DataFrame): O DataFrame contendo os dados dos clientes.
+    - objeto (dict, opcional): Um dicionário de correspondências entre valores e seus equivalentes desejados.
+
+    Retorna:
+    - Tuple: Uma tupla contendo o cluster com o menor número de ocorrências e um dicionário de correspondências.
+
+    Descrição:
+    Esta função analisa o DataFrame 'df' para encontrar o cluster com o menor número de ocorrências. Em seguida, cria um dicionário 'novo_dicionario' que mapeia os valores exclusivos da penúltima coluna do DataFrame para seus equivalentes em 'objeto', se houver correspondência.
+
+    Exemplo de uso:
+    >>> df = pd.DataFrame({'id_client': [1, 2, 3, 4], 'cluster': [0, 1, 0, 1], 'data': [10, 20, 30, 40]})
+    >>> objeto = {10: 'A', 30: 'B'}
+    >>> instancia.clientes_cluster_min(df, objeto)
+    Retorna uma tupla contendo o cluster com o menor número de ocorrências e um dicionário de correspondências.
+
+    """
+        
         contagem_clusters = df['cluster'].value_counts()
         cluster_comum = contagem_clusters.idxmin()
         df = df[df['cluster'] == cluster_comum]
