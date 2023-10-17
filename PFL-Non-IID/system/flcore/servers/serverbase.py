@@ -537,13 +537,13 @@ class Server(object):
         selecao = df_clusterizado['cluster'] == nCluster[0][0]
         selecaoo = df_clusterizado.loc[selecao, 'Media_clients']
         dados = news_data[0][:nCluster[0][1]]
-        print(f'{len(selecaoo)} <==========> {len(dados)}')
+        # print(f'{len(selecaoo)} <==========> {len(dados)}')
         df_clusterizado.loc[selecao, 'Media_clients'] = dados
 
         selecao = df_clusterizado['cluster'] == nCluster[1]
         selecaoo = df_clusterizado.loc[selecao, 'Media_clients']
         dados = news_data[0][nCluster[0][1]:]
-        print(f'{len(selecaoo)} <==========> {len(dados)}')
+        # print(f'{len(selecaoo)} <==========> {len(dados)}')
         
         df_clusterizado.loc[selecao, 'Media_clients'] = dados
         self.users = [df_clusterizado['Media_clients'].tolist()]
@@ -650,7 +650,7 @@ class Server(object):
         train_loss = sum(stats_train[2])*1.0 / sum(stats_train[1])
         with open("saida.txt", "a") as arquivo:
         # Escrever o valor da variável no arquivo
-            arquivo.write(str(test_acc) + "," + str(train_loss))
+            arquivo.write(str(test_acc) + "," + str(train_loss)+ "\n")
         accs = [a / n for a, n in zip(stats[2], stats[1])]
         aucs = [a / n for a, n in zip(stats[3], stats[1])]
         

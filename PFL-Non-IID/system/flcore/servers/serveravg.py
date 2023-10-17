@@ -57,7 +57,6 @@ class FedAvg(Server):
                     
                 df_clientes = self.csv_clients(self.users)
                 df_cluster_clientes = self.data_clusters(df_clientes, k)
-                print(df_cluster_clientes)
 
             else:
                 clientes_cluster = self.clientes_cluster(df_cluster_clientes, self.obj_clients)
@@ -69,7 +68,7 @@ class FedAvg(Server):
                 df = self.updated_data(df, clientes_cluster[0], self.users)
                 df_cluster_clientes = self.data_clusters(df, k)
                 self.users = [df_cluster_clientes['Media_clients'].tolist()]
-                print(df_cluster_clientes)
+                # print(df_cluster_clientes)
                 if self.auto_break and self.check_done(acc_lss=[self.rs_test_acc], top_cnt=self.top_cnt):
                     break
 

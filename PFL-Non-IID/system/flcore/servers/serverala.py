@@ -1,4 +1,5 @@
 import time
+import sys
 from flcore.clients.clientala import clientALA
 from flcore.servers.serverbase import Server
 from threading import Thread
@@ -18,9 +19,9 @@ class FedALA(Server):
         # self.load_model()
         self.Budget = []
 
-    def treinamento(self, i):
+    def treinamento(self, i, clientes):
         s_t = time.time()
-        self.selected_clients = self.select_clients()
+        self.selected_clients = clientes
         self.send_models()
 
         if i%self.eval_gap == 0:
@@ -31,28 +32,42 @@ class FedALA(Server):
         for client in self.selected_clients:
             client.train()
 
-        # threads = [Thread(target=client.train)
-        #            for client in self.selected_clients]
-        # [t.start() for t in threads]
-        # [t.join() for t in threads]
-
-        self.receive_models()
+        self.ids.extend(self.receive_models()) #retorna os ids dos clientes ativos
+        
         if self.dlg_eval and i%self.dlg_gap == 0:
             self.call_dlg(i)
-        self.aggregate_parameters()
-
+        
+        self.users += self.aggregate_parameters()
         self.Budget.append(time.time() - s_t)
         print('-'*25, 'time cost', '-'*25, self.Budget[-1])
 
 
     def train(self):
-        for i in range(self.global_rounds+1):
-            
-            self.treinamento(i)
-            if self.auto_break and self.check_done(
-                acc_lss=[self.rs_test_acc], top_cnt=self.top_cnt):
-                break
+        k = 4
 
+        for i in range(self.global_rounds+1):
+            if i == 0:
+                self.treinamento(i, self.select_clients())
+                if self.auto_break and self.check_done(
+                    acc_lss=[self.rs_test_acc], top_cnt=self.top_cnt):
+                    break
+                
+                df_clientes = self.csv_clients(self.users)
+                df_cluster_clientes = self.data_clusters(df_clientes, k)
+                
+            else:
+                clientes_cluster = self.clientes_cluster(df_cluster_clientes, self.obj_clients)
+                self.selected_clients = list(clientes_cluster[1].values())
+                df_clientes = self.csv_clients(self.users)
+                df = self.data_clusters(df_clientes, k)
+                self.users = []
+                self.treinamento(i, self.selected_clients)
+                df = self.updated_data(df, clientes_cluster[0], self.users)
+                df_cluster_clientes = self.data_clusters(df, k)
+                self.users = [df_cluster_clientes['Media_clients'].tolist()]
+                # print(df_cluster_clientes)
+                if self.auto_break and self.check_done(acc_lss=[self.rs_test_acc], top_cnt=self.top_cnt):
+                    break
 
         print("\nBest accuracy.")
         # self.print_(max(self.rs_test_acc), max(
