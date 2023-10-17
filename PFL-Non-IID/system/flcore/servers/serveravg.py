@@ -69,6 +69,7 @@ class FedAvg(Server):
                 df_cluster_clientes = self.data_clusters(df, k)
                 self.users = [df_cluster_clientes['Media_clients'].tolist()]
                 # print(df_cluster_clientes)
+                
                 if self.auto_break and self.check_done(acc_lss=[self.rs_test_acc], top_cnt=self.top_cnt):
                     break
 
