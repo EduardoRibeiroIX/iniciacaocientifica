@@ -363,9 +363,9 @@ class Server(object):
         """
         # Calcula a contagem de clusters
         contagem_clusters = df['cluster'].value_counts()
-        cluster_a = contagem_clusters.idxmax()
+        cluster_a = contagem_clusters.index[0]
         freq_a = contagem_clusters.get(cluster_a, 0)
-        cluster_b = contagem_clusters.idxmin()
+        cluster_b = contagem_clusters.index[-1]
 
         # Separa os DataFrames para os clusters mais e menos frequentes
         df1 = df[df['cluster'] == cluster_a]
@@ -430,79 +430,6 @@ class Server(object):
         return ([[cluster_a, freq_a], cluster_b], novo_dicionario)
 
 
-    def clientes_cluster_max(self, df, objeto=dict):
-        """
-    Retorna o cluster com o maior número de ocorrências e um dicionário de correspondências.
-
-    Parâmetros:
-    - df (DataFrame): O DataFrame contendo os dados dos clientes.
-    - objeto (dict, opcional): Um dicionário de correspondências entre valores e seus equivalentes desejados.
-
-    Retorna:
-    - Tuple: Uma tupla contendo o cluster com o maior número de ocorrências e um dicionário de correspondências.
-
-    Descrição:
-    Esta função analisa o DataFrame 'df' para encontrar o cluster com o maior número de ocorrências. Em seguida, cria um dicionário 'novo_dicionario' que mapeia os valores exclusivos da penúltima coluna do DataFrame para seus equivalentes em 'objeto', se houver correspondência.
-
-    Exemplo de uso:
-    >>> df = pd.DataFrame({'id_client': [1, 2, 3, 4], 'cluster': [0, 1, 0, 1], 'data': [10, 20, 30, 40]})
-    >>> objeto = {10: 'A', 30: 'B'}
-    >>> instancia.clientes_cluster_max(df, objeto)
-    Retorna uma tupla contendo o cluster com o maior número de ocorrências e um dicionário de correspondências.
-
-    """
-
-        contagem_clusters = df['cluster'].value_counts()
-        cluster_comum = contagem_clusters.idxmax()
-        # cluster_min = random.randint()
-        df = df[df['cluster'] == cluster_comum]
-        x = df[df.columns[-2]].unique()
-        obj = objeto
-        novo_dicionario = {}
-        for valor in x:
-            if valor in obj:
-                v = obj[valor]
-                novo_dicionario[valor] = v
-
-        return (cluster_comum, novo_dicionario)
-
-
-    def clientes_cluster_min(self, df, objeto=dict):
-        """
-    Retorna o cluster com o menor número de ocorrências e um dicionário de correspondências.
-
-    Parâmetros:
-    - df (DataFrame): O DataFrame contendo os dados dos clientes.
-    - objeto (dict, opcional): Um dicionário de correspondências entre valores e seus equivalentes desejados.
-
-    Retorna:
-    - Tuple: Uma tupla contendo o cluster com o menor número de ocorrências e um dicionário de correspondências.
-
-    Descrição:
-    Esta função analisa o DataFrame 'df' para encontrar o cluster com o menor número de ocorrências. Em seguida, cria um dicionário 'novo_dicionario' que mapeia os valores exclusivos da penúltima coluna do DataFrame para seus equivalentes em 'objeto', se houver correspondência.
-
-    Exemplo de uso:
-    >>> df = pd.DataFrame({'id_client': [1, 2, 3, 4], 'cluster': [0, 1, 0, 1], 'data': [10, 20, 30, 40]})
-    >>> objeto = {10: 'A', 30: 'B'}
-    >>> instancia.clientes_cluster_min(df, objeto)
-    Retorna uma tupla contendo o cluster com o menor número de ocorrências e um dicionário de correspondências.
-
-    """
-        
-        contagem_clusters = df['cluster'].value_counts()
-        cluster_comum = contagem_clusters.idxmin()
-        df = df[df['cluster'] == cluster_comum]
-        x = df[df.columns[-2]].unique()
-        obj = objeto
-        novo_dicionario = {}
-        for valor in x:
-            if valor in obj:
-                v = obj[valor]
-                novo_dicionario[valor] = v
-
-        return (cluster_comum, novo_dicionario)
-
-
     def updated_data(self, df_clusterizado, nCluster, news_data):
         """
     Atualiza os dados de um DataFrame 'df_clusterizado' com informações de clusters.
@@ -537,13 +464,11 @@ class Server(object):
         selecao = df_clusterizado['cluster'] == nCluster[0][0]
         selecaoo = df_clusterizado.loc[selecao, 'Media_clients']
         dados = news_data[0][:nCluster[0][1]]
-        # print(f'{len(selecaoo)} <==========> {len(dados)}')
         df_clusterizado.loc[selecao, 'Media_clients'] = dados
 
         selecao = df_clusterizado['cluster'] == nCluster[1]
         selecaoo = df_clusterizado.loc[selecao, 'Media_clients']
         dados = news_data[0][nCluster[0][1]:]
-        # print(f'{len(selecaoo)} <==========> {len(dados)}')
         
         df_clusterizado.loc[selecao, 'Media_clients'] = dados
         self.users = [df_clusterizado['Media_clients'].tolist()]

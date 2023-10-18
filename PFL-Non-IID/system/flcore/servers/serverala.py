@@ -6,6 +6,8 @@ from threading import Thread
 
 
 class FedALA(Server):
+
+    
     def __init__(self, args, times):
         super().__init__(args, times)
 
@@ -18,6 +20,7 @@ class FedALA(Server):
 
         # self.load_model()
         self.Budget = []
+
 
     def treinamento(self, i, clientes):
         s_t = time.time()
@@ -56,7 +59,7 @@ class FedALA(Server):
                 df_cluster_clientes = self.data_clusters(df_clientes, k)
                 
             else:
-                clientes_cluster = self.clientes_cluster(df_cluster_clientes, self.obj_clients)
+                clientes_cluster = self.clientes_cluster_random(df_cluster_clientes, self.obj_clients)
                 self.selected_clients = list(clientes_cluster[1].values())
                 df_clientes = self.csv_clients(self.users)
                 df = self.data_clusters(df_clientes, k)
