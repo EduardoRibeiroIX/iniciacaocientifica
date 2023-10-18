@@ -12,6 +12,7 @@ import random
 import pandas as pd
 from sklearn.cluster import KMeans
 from sklearn.preprocessing import StandardScaler
+from sklearn_extra.cluster import KMedoids
 
 from utils.data_utils import read_client_data
 from utils.dlg import DLG
@@ -294,11 +295,11 @@ class Server(object):
         
         df['id_client'] = id
         df.columns = colum_names
-       
+        df.to_csv("../clientes.csv")
         return df
 
 
-    def data_clusters(self, df, nCluster):
+    def data_clusters(self, df, nCluster=int):
         """
     Realiza a análise de clustering (agrupamento) em um DataFrame de dados.
 
@@ -343,6 +344,64 @@ class Server(object):
         return x
    
 
+    def data_kmedoids(self, df=pd.DataFrame, nCluster=int):
+        """
+        Realiza a análise de clustering K-Medoids em um conjunto de dados.
+
+        Parâmetros:
+        df (DataFrame): O DataFrame contendo os dados a serem analisados. Deve conter uma coluna chamada 'Media_clients'.
+        nCluster (int): O número de clusters desejado.
+
+        Retorna:
+        DataFrame: Um novo DataFrame contendo as colunas originais do DataFrame de entrada, mais uma coluna 'cluster' que indica a qual cluster cada ponto de dados pertence.
+
+        Descrição:
+        Esta função realiza a análise de clustering K-Medoids em um conjunto de dados, com o objetivo de agrupar os dados em 'nCluster' clusters. Ela segue os seguintes passos:
+
+        1. Renomeia o índice do DataFrame para "Index".
+        2. Calcula a média dos dados agrupados por todas as colunas, resultando em um novo DataFrame chamado 'grouped'.
+        3. Isola a coluna 'Media_clients' para a análise de clustering.
+        4. Normaliza os dados usando o StandardScaler.
+        5. Executa o algoritmo K-Medoids com o número de clusters especificado.
+        6. Adiciona uma coluna 'cluster' ao DataFrame 'grouped' que indica o cluster atribuído a cada ponto de dados.
+        7. Retorna o DataFrame 'grouped' com as colunas originais mais a coluna 'cluster'.
+
+        Exemplo de Uso:
+        >>> from sklearn.datasets import make_blobs
+        >>> import pandas as pd
+        >>> from sklearn.preprocessing import StandardScaler
+        >>> from sklearn_extra.cluster import KMedoids
+
+        >>> # Gere um conjunto de dados de exemplo
+        >>> X, _ = make_blobs(n_samples=300, centers=3, cluster_std=1.0, random_state=42)
+        >>> df = pd.DataFrame(X, columns=['Feature1', 'Feature2'])
+        >>> df['Media_clients'] = df.mean(axis=1)
+
+        >>> # Crie uma instância da classe que contém a função e chame a função data_kmedoids
+        >>> instance = SuaClasse()
+        >>> resultado = instance.data_kmedoids(df, nCluster=3)
+
+        Neste exemplo, a função realiza uma análise de clustering K-Medoids nos dados contidos no DataFrame 'df' com 3 clusters e retorna um novo DataFrame 'resultado' com a coluna 'cluster' indicando a atribuição de cluster para cada ponto de dados.
+        """
+
+        df = df.rename_axis("Index")
+        colunas = df.columns
+        colunas = colunas.tolist()
+        grouped = df.groupby(colunas).mean().reset_index()
+        data_for_clustering = grouped[['Media_clients']]
+        scaler = StandardScaler()
+        normalized_data = scaler.fit_transform(data_for_clustering)
+        k = nCluster
+        kmedoids = KMedoids(n_clusters=k, random_state=0)
+        kmedoids.fit(normalized_data)
+        grouped['cluster'] = labels = kmedoids.labels_
+        grouped_colunas = grouped.columns
+        grouped_colunas = grouped_colunas.tolist()
+        x = grouped[grouped_colunas]
+
+        return x
+  
+   
     def clientes_cluster(self, df, objeto=dict):
         """
             Retorna informações sobre os clusters mais e menos frequentes em um DataFrame e um dicionário personalizado.
