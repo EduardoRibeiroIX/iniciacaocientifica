@@ -56,18 +56,18 @@ class FedAvg(Server):
                     break
                     
                 df_clientes = self.csv_clients(self.users)
-                df_cluster_clientes = self.data_kmedoids(df_clientes, k)
+                df_cluster_clientes = self.data_affinityPropagation(df_clientes)
                 print(df_cluster_clientes)
 
             else:
                 clientes_cluster = self.clientes_cluster_random(df_cluster_clientes, self.obj_clients)
                 self.selected_clients = list(clientes_cluster[1].values())
                 df_clientes = self.csv_clients(self.users)
-                df = self.data_kmedoids(df_clientes, k)
+                df = self.data_affinityPropagation(df_clientes)
                 self.users = []
                 self.treinamento(i, self.selected_clients)
                 df = self.updated_data(df, clientes_cluster[0], self.users)
-                df_cluster_clientes = self.data_kmedoids(df, k)
+                df_cluster_clientes = self.data_affinityPropagation(df)
                 self.users = [df_cluster_clientes['Media_clients'].tolist()]
                 print(df_cluster_clientes)
 

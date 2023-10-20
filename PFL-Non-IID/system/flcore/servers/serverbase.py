@@ -10,9 +10,11 @@ import copy
 import time
 import random
 import pandas as pd
+
 from sklearn.cluster import KMeans
 from sklearn.preprocessing import StandardScaler
 from sklearn_extra.cluster import KMedoids
+from sklearn.cluster import AffinityPropagation
 
 from utils.data_utils import read_client_data
 from utils.dlg import DLG
@@ -299,7 +301,7 @@ class Server(object):
         return df
 
 
-    def data_clusters(self, df, nCluster=int):
+    def data_kmeans(self, df, nCluster=int):
         """
     Realiza a análise de clustering (agrupamento) em um DataFrame de dados.
 
@@ -402,6 +404,52 @@ class Server(object):
         return x
   
    
+    def data_affinityPropagation(self, df):
+        """
+        Realiza o clustering de dados utilizando o algoritmo Affinity Propagation.
+
+        Parâmetros:
+        df (DataFrame): Um DataFrame contendo os dados a serem agrupados.
+
+        Retorna:
+        DataFrame: Um novo DataFrame contendo os dados agrupados, incluindo uma coluna "cluster" com os rótulos de cluster atribuídos.
+
+        Descrição:
+        Esta função executa o algoritmo de clustering Affinity Propagation em um conjunto de dados representado por um DataFrame. Ela realiza as seguintes etapas:
+
+        1. Renomeia o índice do DataFrame para "Index".
+        2. Obtém a lista de colunas do DataFrame.
+        3. Seleciona a coluna 'Media_clients' para o clustering.
+        4. Padroniza os dados para ter média zero e desvio padrão um.
+        5. Aplica o algoritmo Affinity Propagation nos dados normalizados.
+        6. Atribui os rótulos de cluster ao DataFrame original.
+        7. Retorna o DataFrame com os rótulos de cluster atribuídos.
+
+        Exemplo de uso:
+        df = carregar_dados()  # Substitua por sua própria função de carregamento de dados.
+        resultado = data_affinityPropagation(df)
+        """
+
+        df = df.rename_axis("Index")
+        colunas = df.columns
+        colunas = colunas.tolist()
+        grouped = df.groupby(colunas).mean().reset_index()
+        data_for_clustering = grouped[['Media_clients']]
+
+        scaler = StandardScaler()
+        normalized_data = scaler.fit_transform(data_for_clustering)
+
+        affinity_propagation = AffinityPropagation()
+        affinity_propagation.fit(normalized_data)
+        grouped['cluster'] = affinity_propagation.labels_
+        grouped_colunas = grouped.columns
+        grouped_colunas = grouped_colunas.tolist()
+        x = grouped[grouped_colunas]
+        # x.to_csv('./csv/clientes.csv')
+
+        return x
+
+
     def clientes_cluster(self, df, objeto=dict):
         """
             Retorna informações sobre os clusters mais e menos frequentes em um DataFrame e um dicionário personalizado.
