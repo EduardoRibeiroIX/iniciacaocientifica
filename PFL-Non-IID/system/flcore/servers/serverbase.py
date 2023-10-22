@@ -14,7 +14,6 @@ import pandas as pd
 from sklearn.cluster import KMeans
 from sklearn.preprocessing import StandardScaler
 from sklearn_extra.cluster import KMedoids
-from sklearn_extra.cluster import FuzzyCMeans
 from sklearn.cluster import MiniBatchKMeans
 
 from utils.data_utils import read_client_data
@@ -415,7 +414,7 @@ class Server(object):
         scaler = StandardScaler()
         normalized_data = scaler.fit_transform(data_for_clustering)
         k = nCluster
-        mbk = MiniBatchKMeans(n_clusters=num_clusters)
+        mbk = MiniBatchKMeans(n_clusters=k)
         mbk.fit(normalized_data)
         grouped['cluster'] =  mbk.labels_
         grouped_colunas = grouped.columns
