@@ -15,6 +15,8 @@ from sklearn.cluster import KMeans
 from sklearn.preprocessing import StandardScaler
 from sklearn_extra.cluster import KMedoids
 from sklearn.cluster import AffinityPropagation
+from sklearn_extra.cluster import FuzzyCMeans
+from sklearn.cluster import MiniBatchKMeans
 
 from utils.data_utils import read_client_data
 from utils.dlg import DLG
@@ -89,6 +91,7 @@ class Server(object):
                             train_slow=train_slow, 
                             send_slow=send_slow)
             self.clients.append(client)
+
 
     # random select slow clients
     def select_slow_clients(self, slow_rate):
@@ -223,11 +226,11 @@ class Server(object):
         >>> obj = SuaClasse()
         >>> tensor = torch.tensor([[1.0, 2.0], [3.0, 4.0]])
         >>> lista = [1, [2, 3.5], [[4, 5.0], 6]]
-        >>> obj.valueOfList(tensor)
+        >> obj.valueOfList(tensor)
         [1.0, 2.0, 3.0, 4.0]
         >>> obj.valueOfList(lista)
         [1, 2, 3.5, 4, 5.0, 6]
-    """
+            """
 
         valueList = list()
     
@@ -301,7 +304,7 @@ class Server(object):
         return df
 
 
-    def data_kmeans(self, df, nCluster=int):
+    def cluster_kmeans(self, df, nCluster=int):
         """
     Realiza a análise de clustering (agrupamento) em um DataFrame de dados.
 
@@ -346,7 +349,7 @@ class Server(object):
         return x
    
 
-    def data_kmedoids(self, df=pd.DataFrame, nCluster=int):
+    def cluster_kmedoids(self, df=pd.DataFrame, nCluster=int):
         """
         Realiza a análise de clustering K-Medoids em um conjunto de dados.
 
@@ -396,56 +399,48 @@ class Server(object):
         k = nCluster
         kmedoids = KMedoids(n_clusters=k, random_state=0)
         kmedoids.fit(normalized_data)
-        grouped['cluster'] = labels = kmedoids.labels_
+        grouped['cluster']  = kmedoids.labels_
         grouped_colunas = grouped.columns
         grouped_colunas = grouped_colunas.tolist()
         x = grouped[grouped_colunas]
 
         return x
   
-   
-    def data_affinityPropagation(self, df):
-        """
-        Realiza o clustering de dados utilizando o algoritmo Affinity Propagation.
 
-        Parâmetros:
-        df (DataFrame): Um DataFrame contendo os dados a serem agrupados.
-
-        Retorna:
-        DataFrame: Um novo DataFrame contendo os dados agrupados, incluindo uma coluna "cluster" com os rótulos de cluster atribuídos.
-
-        Descrição:
-        Esta função executa o algoritmo de clustering Affinity Propagation em um conjunto de dados representado por um DataFrame. Ela realiza as seguintes etapas:
-
-        1. Renomeia o índice do DataFrame para "Index".
-        2. Obtém a lista de colunas do DataFrame.
-        3. Seleciona a coluna 'Media_clients' para o clustering.
-        4. Padroniza os dados para ter média zero e desvio padrão um.
-        5. Aplica o algoritmo Affinity Propagation nos dados normalizados.
-        6. Atribui os rótulos de cluster ao DataFrame original.
-        7. Retorna o DataFrame com os rótulos de cluster atribuídos.
-
-        Exemplo de uso:
-        df = carregar_dados()  # Substitua por sua própria função de carregamento de dados.
-        resultado = data_affinityPropagation(df)
-        """
-
+    def cluster_FuzzyCMeans(self, df=pd.DataFrame, nCluster=int):
         df = df.rename_axis("Index")
         colunas = df.columns
         colunas = colunas.tolist()
         grouped = df.groupby(colunas).mean().reset_index()
         data_for_clustering = grouped[['Media_clients']]
-
         scaler = StandardScaler()
         normalized_data = scaler.fit_transform(data_for_clustering)
-
-        affinity_propagation = AffinityPropagation()
-        affinity_propagation.fit(normalized_data)
-        grouped['cluster'] = affinity_propagation.labels_
+        k = nCluster
+        fcm = FuzzyCMeans(n_clusters=k)
+        fcm.fit(normalized_data)
+        grouped['cluster'] =  fcm.labels_
         grouped_colunas = grouped.columns
         grouped_colunas = grouped_colunas.tolist()
         x = grouped[grouped_colunas]
-        # x.to_csv('./csv/clientes.csv')
+
+        return x
+
+
+    def cluster_MiniBatchKMeans(self, df=pd.DataFrame, nCluster=int):
+        df = df.rename_axis("Index")
+        colunas = df.columns
+        colunas = colunas.tolist()
+        grouped = df.groupby(colunas).mean().reset_index()
+        data_for_clustering = grouped[['Media_clients']]
+        scaler = StandardScaler()
+        normalized_data = scaler.fit_transform(data_for_clustering)
+        k = nCluster
+        mbk = MiniBatchKMeans(n_clusters=num_clusters)
+        mbk.fit(normalized_data)
+        grouped['cluster'] =  mbk.labels_
+        grouped_colunas = grouped.columns
+        grouped_colunas = grouped_colunas.tolist()
+        x = grouped[grouped_colunas]
 
         return x
 
