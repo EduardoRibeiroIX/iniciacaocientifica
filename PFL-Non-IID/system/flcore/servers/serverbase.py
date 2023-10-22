@@ -14,7 +14,6 @@ import pandas as pd
 from sklearn.cluster import KMeans
 from sklearn.preprocessing import StandardScaler
 from sklearn_extra.cluster import KMedoids
-from sklearn.cluster import AffinityPropagation
 from sklearn_extra.cluster import FuzzyCMeans
 from sklearn.cluster import MiniBatchKMeans
 
@@ -400,25 +399,6 @@ class Server(object):
         kmedoids = KMedoids(n_clusters=k, random_state=0)
         kmedoids.fit(normalized_data)
         grouped['cluster']  = kmedoids.labels_
-        grouped_colunas = grouped.columns
-        grouped_colunas = grouped_colunas.tolist()
-        x = grouped[grouped_colunas]
-
-        return x
-  
-
-    def cluster_FuzzyCMeans(self, df=pd.DataFrame, nCluster=int):
-        df = df.rename_axis("Index")
-        colunas = df.columns
-        colunas = colunas.tolist()
-        grouped = df.groupby(colunas).mean().reset_index()
-        data_for_clustering = grouped[['Media_clients']]
-        scaler = StandardScaler()
-        normalized_data = scaler.fit_transform(data_for_clustering)
-        k = nCluster
-        fcm = FuzzyCMeans(n_clusters=k)
-        fcm.fit(normalized_data)
-        grouped['cluster'] =  fcm.labels_
         grouped_colunas = grouped.columns
         grouped_colunas = grouped_colunas.tolist()
         x = grouped[grouped_colunas]
