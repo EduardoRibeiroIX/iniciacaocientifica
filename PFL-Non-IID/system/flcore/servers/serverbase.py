@@ -299,7 +299,7 @@ class Server(object):
         return df
 
 
-    def data_clusters(self, df, nCluster=int):
+    def cluster_kmeans(self, df, nCluster=int):
         """
     Realiza a análise de clustering (agrupamento) em um DataFrame de dados.
 
@@ -344,7 +344,7 @@ class Server(object):
         return x
    
 
-    def data_kmedoids(self, df=pd.DataFrame, nCluster=int):
+    def cluster_kmedoids(self, df=pd.DataFrame, nCluster=int):
         """
         Realiza a análise de clustering K-Medoids em um conjunto de dados.
 
