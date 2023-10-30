@@ -141,7 +141,12 @@ class Server(object):
     def receive_models(self):
         assert (len(self.selected_clients) > 0)
 
-        active_clients = self.selected_clients
+        if self.client_drop_rate == 0.0:
+            active_clients = self.selected_clients
+        else:
+            active_clients = random.sample(
+            self.selected_clients, int((1-self.client_drop_rate) * self.current_num_join_clients)
+            )
 
         self.uploaded_ids = []
         self.uploaded_weights = []
@@ -404,24 +409,6 @@ class Server(object):
 
         return x
 
-
-    def cluster_MiniBatchKMeans(self, df=pd.DataFrame, nCluster=int):
-        df = df.rename_axis("Index")
-        colunas = df.columns
-        colunas = colunas.tolist()
-        grouped = df.groupby(colunas).mean().reset_index()
-        data_for_clustering = grouped[['Media_clients']]
-        scaler = StandardScaler()
-        normalized_data = scaler.fit_transform(data_for_clustering)
-        k = nCluster
-        mbk = MiniBatchKMeans(n_clusters=k)
-        mbk.fit(normalized_data)
-        grouped['cluster'] =  mbk.labels_
-        grouped_colunas = grouped.columns
-        grouped_colunas = grouped_colunas.tolist()
-        x = grouped[grouped_colunas]
-
-        return x
 
 
     def clientes_cluster(self, df, objeto=dict):
