@@ -56,17 +56,17 @@ class FedALA(Server):
                     break
                 
                 df_clientes = self.csv_clients(self.users)
-                df_cluster_clientes = self.data_clusters(df_clientes, k)
+                df_cluster_clientes = self.cluster_kmedoids(df_clientes, k)
                 
             else:
                 clientes_cluster = self.clientes_cluster_random(df_cluster_clientes, self.obj_clients)
                 self.selected_clients = list(clientes_cluster[1].values())
                 df_clientes = self.csv_clients(self.users)
-                df = self.data_clusters(df_clientes, k)
+                df = self.cluster_kmedoids(df_clientes, k)
                 self.users = []
                 self.treinamento(i, self.selected_clients)
                 df = self.updated_data(df, clientes_cluster[0], self.users)
-                df_cluster_clientes = self.data_clusters(df, k)
+                df_cluster_clientes = self.cluster_kmedoids(df, k)
                 self.users = [df_cluster_clientes['Media_clients'].tolist()]
                 # print(df_cluster_clientes)
                 if self.auto_break and self.check_done(acc_lss=[self.rs_test_acc], top_cnt=self.top_cnt):
