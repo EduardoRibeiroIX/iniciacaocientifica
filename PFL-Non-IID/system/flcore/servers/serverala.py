@@ -43,7 +43,9 @@ class FedALA(Server):
         self.users += self.aggregate_parameters()
         self.Budget.append(time.time() - s_t)
         print('-'*25, 'time cost', '-'*25, self.Budget[-1])
-
+        with open("budget.txt", "a") as arquivo:
+            arquivo.write(str(self.Budget[-1]) + "\n")
+            
 
     def train(self):
         k = 4

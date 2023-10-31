@@ -44,6 +44,9 @@ class MOON(Server):
 
         self.Budget.append(time.time() - s_t)
         print('-'*50, self.Budget[-1])
+        with open("budget.txt", "a") as arquivo:
+            arquivo.write(str(self.Budget[-1]) + "\n")
+            
 
 
     def train(self):
