@@ -485,7 +485,8 @@ class Server(object):
             if valor in obj:
                 v = obj[valor]
                 novo_dicionario[valor] = v
-
+        
+        print(f'{freq_a + contagem_clusters.get(cluster_b, 0)}')
         return ([[cluster_a, freq_a], cluster_b], novo_dicionario)
 
 
