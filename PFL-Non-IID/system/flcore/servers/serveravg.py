@@ -51,7 +51,8 @@ class FedAvg(Server):
 
         for i in range(self.global_rounds+1):
             if i == 0:
-                self.treinamento(i, self.select_clients())
+                clientes = self.select_clients()
+                self.treinamento(i, clientes)
                 if self.auto_break and self.check_done(acc_lss=[self.rs_test_acc], top_cnt=self.top_cnt):
                     break
                     

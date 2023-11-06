@@ -110,10 +110,12 @@ class Server(object):
 
 
     def select_clients(self):
+        
         if self.random_join_ratio:
             self.current_num_join_clients = np.random.choice(range(self.num_join_clients, self.num_clients+1), 1, replace=False)[0]
         else:
             self.current_num_join_clients = self.num_join_clients
+        
         selected_clients = list(np.random.choice(self.clients, self.current_num_join_clients, replace=False))
         
         for i, objeto in enumerate(selected_clients):
@@ -147,6 +149,8 @@ class Server(object):
             active_clients = random.sample(
             self.selected_clients, int((1-self.client_drop_rate) * self.current_num_join_clients)
             )
+
+        print(self.find_key(self.obj_clients, active_clients))
 
         self.uploaded_ids = []
         self.uploaded_weights = []
@@ -196,6 +200,7 @@ class Server(object):
         for server_param, client_param in zip(self.global_model.parameters(), client_model.parameters()):
             valores.extend(self.valueOfList(client_param.data))
             server_param.data += client_param.data.clone() * w
+            
 
         vp = np.append(vp, valores)
         media.append(float(vp.sum() / len(vp)))
@@ -206,6 +211,15 @@ class Server(object):
     
 
 #-------------------------------- My functions---------------------------------------#
+
+
+    def find_key(self, objeto, lista):
+        clientes = []
+        for valor in lista:
+            for chave, valor_objeto in objeto.items():
+                if valor == valor_objeto:
+                    clientes.append(chave)
+        return clientes
 
 
     def valueOfList(self, value):
