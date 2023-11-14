@@ -44,7 +44,7 @@ class Server(object):
         self.auto_break = args.auto_break
 
         self.clients = []
-        self.users_0 = []
+        self.usuarios_round = 0
         self.users = [] # contém os dados dos usuário
         self.ids = [] # contém os ids dos clientes a cada round de traino
         self.obj_clients = {} # contém os objetos da clase Client
@@ -329,16 +329,19 @@ class Server(object):
         df = df.rename_axis("Index")
         colunas = df.columns
         colunas = colunas.tolist()
-        grouped = df.groupby(colunas).mean().reset_index()
-        data_for_clustering = grouped[['Media_clients']]
+        # grouped = df.groupby(colunas).mean().reset_index()
+        # print(grouped)
+        # sys.exit()
+        data_for_clustering = df[['Media_clients']]
         scaler = StandardScaler()
         normalized_data = scaler.fit_transform(data_for_clustering)
         k = nCluster
         kmeans = KMeans(n_clusters=k, random_state=0)
-        grouped['cluster'] = kmeans.fit_predict(normalized_data)
-        grouped_colunas = grouped.columns
+        df['cluster'] = kmeans.fit_predict(normalized_data)
+        grouped_colunas = df.columns
         grouped_colunas = grouped_colunas.tolist()
-        x = grouped[grouped_colunas]
+        x = df[grouped_colunas].sort_values(by=['cluster']).reset_index(drop=True)
+        x = x
         # x.to_csv('./csv/clientes.csv')
 
         return x
@@ -403,47 +406,20 @@ class Server(object):
   
    
     def clientes_cluster(self, df, objeto=dict):
-        """
-            Retorna informações sobre os clusters mais e menos frequentes em um DataFrame e um dicionário personalizado.
-
-            Parâmetros:
-            df (DataFrame): O DataFrame contendo os dados dos clientes, incluindo uma coluna 'cluster'.
-            objeto (dict): Um dicionário personalizado contendo valores associados aos clusters.
-
-            Retorna:
-            list: Uma lista contendo informações sobre os clusters mais e menos frequentes e um dicionário personalizado.
-
-            Exemplo:
-            >>> df = pd.DataFrame({'cliente_id': [1, 2, 3, 4, 5],
-            ...                    'cluster': ['A', 'B', 'A', 'B', 'A']})
-            >>> obj = {'A': 'Alto', 'B': 'Baixo'}
-            >>> clientes_cluster(df, obj)
-            [['A', 3], 'B'], {'A': 'Alto', 'B': 'Baixo'}
-        """
-        # Calcula a contagem de clusters
-        contagem_clusters = df['cluster'].value_counts()
-        cluster_a = contagem_clusters.index[0]
-        freq_a = contagem_clusters.get(cluster_a, 0)
-        cluster_b = contagem_clusters.index[-1]
-
-        # Separa os DataFrames para os clusters mais e menos frequentes
-        df1 = df[df['cluster'] == cluster_a]
-        df2 = df[df['cluster'] == cluster_b]
-        df = pd.concat([df1, df2], ignore_index=True)
-
-        # Obtém os valores únicos da coluna de cluster
-        x = df[df.columns[-2]].unique()
-        obj = objeto
-        novo_dicionário = {}
-
-        # Mapeia valores do objeto personalizado para os clusters
-        for valor in x:
-            if valor in obj:
-                v = obj[valor]
-                novo_dicionário[valor] = v
-
-        return ([[cluster_a, freq_a], cluster_b], novo_dicionário)
-
+        # lista = []
+        # for i in range(0, 9):
+        #     x = df.loc[df['cluster'] == i]
+        #     lista.append(x['id_client'].tolist())
+        # print(lista)
+        # sys.exit()
+        id_todos = df['id_client'].tolist()
+        self.usuarios_round = random.choices(id_todos, k=15)
+        objetos_selecionados = []
+        for k in self.usuarios_round:
+            if k in objeto:
+                objetos_selecionados.append(objeto[k])
+        return objetos_selecionados
+        
 
     def clientes_cluster_random(self, df, objeto=dict):
         """
@@ -486,53 +462,14 @@ class Server(object):
                 v = obj[valor]
                 novo_dicionario[valor] = v
         
-        print(f'{freq_a + contagem_clusters.get(cluster_b, 0)}')
         return ([[cluster_a, freq_a], cluster_b], novo_dicionario)
 
 
-    def updated_data(self, df_clusterizado, nCluster, news_data):
-        """
-    Atualiza os dados de um DataFrame 'df_clusterizado' com informações de clusters.
+    def updated_data(self, df_clusterizado, usuarios, news_data):
+        for i in range(len(self.usuarios_round)):
+            df_clusterizado.loc[df_clusterizado['id_client'] == self.usuarios_round[i], 'Media_clients'] = news_data[i]
 
-    Parâmetros:
-    - df_clusterizado (DataFrame): O DataFrame contendo os dados a serem atualizados.
-    - nCluster (list of lists): Uma lista de listas que descrevem os clusters. Cada lista interna
-      contém informações sobre o cluster, como cluster ID e tamanho.
-    - news_data (list): Uma lista contendo os novos dados a serem incorporados aos clusters.
-
-    Retorna:
-    - DataFrame: O DataFrame 'df_clusterizado' atualizado com a coluna 'Media_clients' preenchida
-      com base nas informações do 'news_data'. O DataFrame resultante contém apenas as colunas
-      'Media_clients' e 'id_client'.
-
-    Descrição:
-    Esta função atualiza o DataFrame 'df_clusterizado' preenchendo a coluna 'Media_clients' com base
-    nas informações do 'news_data'. Os clusters são identificados com base nas informações em 'nCluster',
-    e os dados correspondentes são atribuídos a cada cluster com base nas informações de tamanho.
-
-    A função também atualiza o atributo de classe 'users' com uma lista contendo os valores da coluna
-    'Media_clients'.
-
-    Exemplo de uso:
-    >>> df = pd.DataFrame({'id_client': [1, 2, 3, 4], 'cluster': [0, 1, 0, 1]})
-    >>> nCluster = [[0, 2], 1]
-    >>> news_data = [[10, 20, 30, 40]]
-    >>> instancia.updated_data(df, nCluster, news_data)
-    Retorna o DataFrame atualizado com a coluna 'Media_clients' preenchida.
-
-    """
-        selecao = df_clusterizado['cluster'] == nCluster[0][0]
-        selecaoo = df_clusterizado.loc[selecao, 'Media_clients']
-        dados = news_data[0][:nCluster[0][1]]
-        df_clusterizado.loc[selecao, 'Media_clients'] = dados
-
-        selecao = df_clusterizado['cluster'] == nCluster[1]
-        selecaoo = df_clusterizado.loc[selecao, 'Media_clients']
-        dados = news_data[0][nCluster[0][1]:]
-        
-        df_clusterizado.loc[selecao, 'Media_clients'] = dados
-        self.users = [df_clusterizado['Media_clients'].tolist()]
-
+        self.users = df_clusterizado['Media_clients'].tolist()
         return df_clusterizado[['Media_clients', 'id_client']]
 
 

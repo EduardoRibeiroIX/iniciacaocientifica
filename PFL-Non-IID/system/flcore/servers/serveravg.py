@@ -1,5 +1,6 @@
 import sys
 import time
+import random 
 import pandas as pd
 from flcore.clients.clientavg import clientAVG
 from flcore.servers.serverbase import Server
@@ -49,29 +50,31 @@ class FedAvg(Server):
 
 
     def train(self):
-        k = 4
+        k = 10
 
         for i in range(self.global_rounds+1):
             if i == 0:
                 self.treinamento(i, self.select_clients())
                 if self.auto_break and self.check_done(acc_lss=[self.rs_test_acc], top_cnt=self.top_cnt):
                     break
-                    
+
                 df_clientes = self.csv_clients(self.users)
-                df_cluster_clientes = self.cluster_kmedoids(df_clientes, k)
-                # print(df_cluster_clientes)
+                df_cluster_clientes = self.cluster_kmeans(df_clientes, k)
+                print(df_cluster_clientes)
 
             else:
-                clientes_cluster = self.clientes_cluster_random(df_cluster_clientes, self.obj_clients)
-                self.selected_clients = list(clientes_cluster[1].values())
+                clientes_cluster = self.clientes_cluster(df_cluster_clientes, self.obj_clients)
+                self.selected_clients = clientes_cluster
                 df_clientes = self.csv_clients(self.users)
-                df = self.cluster_kmedoids(df_clientes, k)
+                df = self.cluster_kmeans(df_clientes, k)
                 self.users = []
                 self.treinamento(i, self.selected_clients)
-                df = self.updated_data(df, clientes_cluster[0], self.users)
-                df_cluster_clientes = self.cluster_kmedoids(df, k)
+                # print(len(self.users[0]))
+                # print(self.usuarios_round)
+                df = self.updated_data(df, self.usuarios_round, self.users[0])
+                df_cluster_clientes = self.cluster_kmeans(df, k)
+                print(df_cluster_clientes)
                 self.users = [df_cluster_clientes['Media_clients'].tolist()]
-                # print(df_cluster_clientes)
 
 
                 if self.auto_break and self.check_done(acc_lss=[self.rs_test_acc], top_cnt=self.top_cnt):
